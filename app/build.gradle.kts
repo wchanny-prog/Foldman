@@ -38,8 +38,11 @@ android {
         versionName = appVersionName
         buildConfigField("String", "APPLE_DEVELOPER_TOKEN", "\"$appleDeveloperToken\"")
         // Every current foldable is 64-bit ARM; leaving out the rest halves the APK.
-        ndk {
-            abiFilters += "arm64-v8a"
+        // -PallAbis keeps every ABI, for the x86 emulator that takes the CI screenshots.
+        if (!project.hasProperty("allAbis")) {
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
         }
     }
 
