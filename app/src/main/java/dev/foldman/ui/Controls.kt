@@ -94,7 +94,7 @@ fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp,
     }
     val outline = Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(0f, 0f, size.width, size.height, r)) }
     val body = Brush.verticalGradient(
-        0f to lerp(color, Color.White, 0.20f), 0.22f to lerp(color, Color.White, 0.04f), 0.6f to lerp(color, Color.Black, 0.12f), 1f to lerp(color, Color.Black, 0.38f),
+        0f to lerp(color, Color.White, 0.22f), 0.2f to lerp(color, Color.White, 0.06f), 0.6f to lerp(color, Color.Black, 0.14f), 1f to lerp(color, Color.Black, 0.42f),
     )
     val sheen = Brush.linearGradient(
         0f to Color.Transparent, 0.22f to Color.White.copy(alpha = 0.13f), 0.36f to Color.Transparent,
@@ -107,8 +107,8 @@ fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp,
         if (framed) drawRoundRect(Color.Black.copy(alpha = 0.5f), topLeft = Offset(0f, 8f), cornerRadius = r)
         clipPath(outline) {
             drawRect(body)
-            drawPath(bright, Color.White.copy(alpha = 0.055f), style = Stroke(0.9f))
-            drawPath(dim, Color.Black.copy(alpha = 0.07f), style = Stroke(0.9f))
+            drawPath(bright, Color.White.copy(alpha = 0.075f), style = Stroke(0.9f))
+            drawPath(dim, Color.Black.copy(alpha = 0.12f), style = Stroke(0.9f))
             if (cap > 0f) {
                 // The top cap is a separate piece: a shade lighter, with a machined seam below it.
                 drawRect(Color.White.copy(alpha = 0.07f), size = Size(size.width, cap))
