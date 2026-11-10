@@ -107,7 +107,7 @@ fun TapeCounter(reels: ReelMotion, modifier: Modifier = Modifier, digitWidth: Dp
 
 /** The operate LED: steady while playing, slow blink when paused, fast flicker while winding. */
 @Composable
-fun StatusLed(transport: Transport, modifier: Modifier = Modifier, caption: String = "OPERATE") {
+fun StatusLed(transport: Transport, modifier: Modifier = Modifier, caption: String = "OPERATE", captionColor: Color = DeckColors.Engrave) {
     val blink = rememberInfiniteTransition(label = "led")
     val slow by blink.animateFloat(0f, 1f, infiniteRepeatable(tween(1000, easing = LinearEasing)), label = "slow")
     val on = when (transport) {
@@ -124,7 +124,7 @@ fun StatusLed(transport: Transport, modifier: Modifier = Modifier, caption: Stri
             drawCircle(DeckColors.Led.copy(alpha = on), r * 0.42f)
             drawCircle(Color.White.copy(alpha = 0.25f + 0.5f * on), r * 0.14f, center - Offset(r * 0.14f, r * 0.14f))
         }
-        Text(caption, style = EngravedCaps.copy(fontSize = 7.sp, letterSpacing = 1.sp))
+        Text(caption, style = EngravedCaps.copy(color = captionColor, fontSize = 7.sp, letterSpacing = 1.sp))
     }
 }
 

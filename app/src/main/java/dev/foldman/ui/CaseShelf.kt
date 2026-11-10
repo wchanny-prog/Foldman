@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -107,15 +109,38 @@ fun CaseShelf(
                     }
                 }
             }
-            else -> LazyVerticalGrid(columns = GridCells.Adaptive(caseWidth + 10.dp)) {
-                items(cases, key = { it.id }) { case ->
-                    Column {
-                        Box(Modifier.padding(start = 5.dp, end = 5.dp, top = 8.dp)) {
-                            CaseSlot(case, armed == case.id, { armed = it }, actions) {
-                                CaseFront(case, inDeck = case.id == inDeckId, cover = actions.cover)
+            else -> BoxWithConstraints(Modifier.fillMaxSize()) {
+                if (maxHeight < 230.dp) {
+                    // A short panel holds one shelf: the cases stand full height and scroll sideways.
+                    Column(Modifier.fillMaxSize()) {
+                        LazyRow(
+                            Modifier.weight(1f).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(start = 6.dp, end = 6.dp, top = 8.dp),
+                        ) {
+                            items(cases, key = { it.id }) { case ->
+                                CaseSlot(case, armed == case.id, { armed = it }, actions) {
+                                    CaseFront(
+                                        case, inDeck = case.id == inDeckId, cover = actions.cover,
+                                        modifier = Modifier.fillMaxHeight().aspectRatio(CASE_ASPECT, matchHeightConstraintsFirst = true),
+                                    )
+                                }
                             }
                         }
                         ShelfPlank()
+                    }
+                } else {
+                    LazyVerticalGrid(columns = GridCells.Adaptive(caseWidth + 10.dp)) {
+                        items(cases, key = { it.id }) { case ->
+                            Column {
+                                Box(Modifier.padding(start = 5.dp, end = 5.dp, top = 8.dp)) {
+                                    CaseSlot(case, armed == case.id, { armed = it }, actions) {
+                                        CaseFront(case, inDeck = case.id == inDeckId, cover = actions.cover)
+                                    }
+                                }
+                                ShelfPlank()
+                            }
+                        }
                     }
                 }
             }
@@ -203,14 +228,17 @@ private fun CaseSlot(
 
 /** The case facing out: clear plastic over the J-card, with the hinge down the left edge. */
 @Composable
-private fun CaseFront(case: TapeCase, inDeck: Boolean, cover: suspend (TapeCase) -> ImageBitmap?) {
+private fun CaseFront(
+    case: TapeCase,
+    inDeck: Boolean,
+    cover: suspend (TapeCase) -> ImageBitmap?,
+    modifier: Modifier = Modifier.fillMaxWidth().aspectRatio(CASE_ASPECT),
+) {
     val stripe = Color(case.stripe)
     val stripe2 = Color(case.stripe2)
     val art by produceState<ImageBitmap?>(null, case.id, case.hasCover) { value = cover(case) }
     Row(
-        Modifier
-            .fillMaxWidth()
-            .aspectRatio(CASE_ASPECT)
+        modifier
             .offset(y = if (inDeck) (-6).dp else 0.dp)
             .shadow(if (inDeck) 10.dp else 5.dp, RoundedCornerShape(3.dp))
             .clip(RoundedCornerShape(3.dp))

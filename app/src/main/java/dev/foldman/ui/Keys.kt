@@ -245,6 +245,7 @@ fun MiniButton(
     symbol: KeySymbol? = null,
     diameter: Dp = 34.dp,
     enabled: Boolean = true,
+    captionColor: Color = DeckColors.Engrave,
 ) {
     var pressed by remember { mutableStateOf(false) }
     val view = LocalView.current
@@ -286,6 +287,6 @@ fun MiniButton(
             }
         }
         Spacer(Modifier.height(3.dp))
-        Text(caption, style = EngravedCaps.copy(fontSize = 7.sp, letterSpacing = 1.sp), maxLines = 1)
+        Text(caption, style = EngravedCaps.copy(fontSize = 7.sp, letterSpacing = 1.sp, color = captionColor), maxLines = 1)
     }
 }

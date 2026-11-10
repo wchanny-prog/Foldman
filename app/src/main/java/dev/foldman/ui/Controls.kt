@@ -318,10 +318,12 @@ fun VolumeSlider(volume: Float, onVolume: (Float) -> Unit, modifier: Modifier = 
             val y = ny + nubH * i / 9f
             drawLine(Color.Black.copy(alpha = 0.3f), Offset(left + 3f, y), Offset(right - 3f, y), 1f)
         }
-        val l = measurer.measure("LEFT", small)
-        val r = measurer.measure("RIGHT", small)
+        // Spelled out where the tracks are far enough apart; otherwise the words would run together.
+        val wide = xs[1] - xs[0] > 34.dp.toPx()
+        val l = measurer.measure(if (wide) "LEFT" else "L", small)
+        val r = measurer.measure(if (wide) "RIGHT" else "R", small)
         drawText(l, topLeft = Offset(xs[0] - l.size.width / 2f, size.height - labelH))
-        drawText(r, topLeft = Offset(xs[1] - r.size.width / 2f + 4f, size.height - labelH))
+        drawText(r, topLeft = Offset(xs[1] - r.size.width / 2f, size.height - labelH))
     }
 }
 

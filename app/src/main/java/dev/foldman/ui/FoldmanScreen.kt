@@ -362,9 +362,9 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.bezel().padding(5.dp)) { TapeCounter(anim.reels, digitWidth = 16.dp) }
                         Spacer(Modifier.width(8.dp))
-                        MiniButton("RESET", { anim.reels.resetCounter() }, diameter = 20.dp)
+                        MiniButton("RESET", { anim.reels.resetCounter() }, diameter = 20.dp, captionColor = OnEnamel.color)
                         Spacer(Modifier.width(6.dp))
-                        StatusLed(ui.transport)
+                        StatusLed(ui.transport, captionColor = OnEnamel.color)
                     }
                 }
                 Spacer(Modifier.width(16.dp))
@@ -376,11 +376,11 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
             }
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 30.dp)
+                MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 30.dp, captionColor = OnEnamel.color)
                 Spacer(Modifier.width(10.dp))
                 TransportKeys(ui, deck.stop, deck.rewind, deck.play, deck.fastForward, deck.pause, Modifier.weight(1f), keyHeight = 58.dp)
                 Spacer(Modifier.width(10.dp))
-                MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 30.dp, enabled = ui.hasNext)
+                MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 30.dp, enabled = ui.hasNext, captionColor = OnEnamel.color)
             }
         }
         // Silver end strip: mic, switches, volume and phones.
