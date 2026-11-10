@@ -60,7 +60,10 @@ import dev.foldman.deck.DeckEvent
 import dev.foldman.deck.DeckUi
 import dev.foldman.deck.DeckViewModel
 import dev.foldman.deck.Source
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 private enum class Posture { Cover, Unfolded, Tabletop }
 
@@ -94,8 +97,14 @@ fun FoldmanScreen(
 
     // A new tape drops into the deck whenever the source changes (and when the app opens).
     LaunchedEffect(ui.source) {
-        anim.insert.snapTo(1f)
-        anim.insert.animateTo(0f, spring(dampingRatio = 0.62f, stiffness = 220f))
+        try {
+            anim.insert.snapTo(1f)
+            // The drop takes well under a second. If the animation can't run (animations switched
+            // off, or frames stalled) the tape is seated anyway, never left out of the window.
+            withTimeoutOrNull(1500) { anim.insert.animateTo(0f, spring(dampingRatio = 0.62f, stiffness = 220f)) }
+        } finally {
+            withContext(NonCancellable) { anim.insert.snapTo(0f) }
+        }
         if (feel.keySounds) sounds.autoStop()
     }
     LaunchedEffect(vm) {

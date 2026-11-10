@@ -31,6 +31,7 @@ adb shell -n am force-stop dev.foldman
 seed
 launch
 shot cover 6
+adb shell -n dumpsys activity activities | grep -i -m3 "ResumedActivity\|mFocusedApp" || true
 # The TAPES button, top left, opens the shelf.
 adb shell -n input tap 130 112
 shot cover-shelf 4
