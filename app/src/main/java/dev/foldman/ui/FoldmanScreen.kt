@@ -126,6 +126,9 @@ fun FoldmanScreen(
             play = vm::playApplePlaylist,
         )
     }
+    val caseActions = remember(vm) {
+        CaseActions(play = vm::playCase, remove = vm::removeCase, cover = { vm.caseCover(it) })
+    }
     val shelfActions = remember(vm) {
         ShelfActions(
             selectSource = vm::selectSource,
@@ -135,6 +138,7 @@ fun FoldmanScreen(
             openApp = vm::openSourceApp,
             installApp = onInstallApp,
             apple = appleActions,
+            cases = caseActions,
         )
     }
     val deck = remember(vm) { DeckControls(vm) }
@@ -212,6 +216,12 @@ fun FoldmanScreen(
                             openApp = vm::openSourceApp,
                             installApp = onInstallApp,
                             apple = appleActions,
+                            // Loading a tape closes the shelf, so the player is back in view as it starts.
+                            cases = CaseActions(
+                                play = { vm.playCase(it); shelfOpen = false },
+                                remove = vm::removeCase,
+                                cover = { vm.caseCover(it) },
+                            ),
                         ),
                         Modifier.fillMaxWidth().height(sheetHeight),
                     )

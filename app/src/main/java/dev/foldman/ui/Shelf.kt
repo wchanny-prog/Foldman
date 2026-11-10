@@ -24,6 +24,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,28 +59,53 @@ class ShelfActions(
     val openApp: () -> Unit,
     val installApp: (Source) -> Unit,
     val apple: AppleActions,
+    val cases: CaseActions,
 )
 
 /**
- * The tape shelf: a spine for each source (tap one to load it into the deck) above the J-card of
- * the tape that's in, with its cover and track list.
+ * The tape shelf. One side holds the cassette cases of every album played so far; the other has
+ * a spine for each source (tap one to load it into the deck) above the J-card of the tape that's
+ * in, with its cover and track list.
  */
 @Composable
 fun TapeShelf(ui: DeckUi, actions: ShelfActions, modifier: Modifier = Modifier) {
+    // Opens on the cases once there are some; until then, on the sources so a first tape can be loaded.
+    var showCases by rememberSaveable { mutableStateOf(ui.cases.isNotEmpty()) }
     Column(
         modifier
             .background(Brush.verticalGradient(listOf(Color(0xFF2A1F17), Color(0xFF1C1510))))
             .padding(16.dp),
     ) {
-        Text("TAPES", style = EngravedCaps.copy(color = Color(0xFFB59B80), fontSize = 10.sp, letterSpacing = 3.sp))
-        Spacer(Modifier.height(10.dp))
-        Source.entries.forEach { s ->
-            TapeSpine(s, inDeck = s == ui.source, onClick = { actions.selectSource(s) })
-            Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ShelfTab("TAPE CASES", selected = showCases) { showCases = true }
+            Spacer(Modifier.width(8.dp))
+            ShelfTab("SOURCES", selected = !showCases) { showCases = false }
         }
-        Spacer(Modifier.height(8.dp))
-        JCard(ui, actions, Modifier.weight(1f).fillMaxWidth())
+        Spacer(Modifier.height(12.dp))
+        if (showCases) {
+            CaseShelf(ui.cases, ui.inDeckCaseId, actions.cases, Modifier.weight(1f).fillMaxWidth(), showHeader = true)
+        } else {
+            Source.entries.forEach { s ->
+                TapeSpine(s, inDeck = s == ui.source, onClick = { actions.selectSource(s) })
+                Spacer(Modifier.height(8.dp))
+            }
+            Spacer(Modifier.height(8.dp))
+            JCard(ui, actions, Modifier.weight(1f).fillMaxWidth())
+        }
     }
+}
+
+@Composable
+private fun ShelfTab(label: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        style = EngravedCaps.copy(color = if (selected) Color(0xFF1C1510) else Color(0xFFB59B80), fontSize = 10.sp, letterSpacing = 2.sp),
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(if (selected) DeckColors.Accent else Color.White.copy(alpha = 0.06f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    )
 }
 
 @Composable

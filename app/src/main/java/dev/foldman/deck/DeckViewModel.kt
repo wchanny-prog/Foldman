@@ -10,6 +10,7 @@ import android.provider.Settings
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -65,6 +66,10 @@ data class DeckUi(
     val keySounds: Boolean = true,
     val haptics: Boolean = true,
     val apple: AppleUi = AppleUi(),
+    /** The shelf of tape cases: every album that has been through the deck. */
+    val cases: List<TapeCase> = emptyList(),
+    /** The case whose tape is in the deck now, if it has one. */
+    val inDeckCaseId: String? = null,
 ) {
     /** How far through the tape we are: the left reel empties into the right one as this grows. */
     val progress: Float get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -90,6 +95,8 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
         Source.YT_MUSIC to RemoteBackend(app, Source.YT_MUSIC),
         Source.APPLE_MUSIC to RemoteBackend(app, Source.APPLE_MUSIC),
     )
+
+    private val caseStore = TapeCaseStore(app)
 
     private val _ui = MutableStateFlow(DeckUi())
     val ui: StateFlow<DeckUi> = _ui.asStateFlow()
@@ -325,6 +332,35 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
         (remotes[source])?.openApp()
     }
 
+    // region Tape cases
+
+    /** Takes a case off the shelf and loads its tape: the album starts playing in the source it came from. */
+    fun playCase(case: TapeCase) {
+        selectSource(case.source)
+        if (winding != 0) finishWinding()
+        when (case.source) {
+            Source.LOCAL -> {
+                val index = tracks.indexOfFirst { it.folder.equals(case.album, ignoreCase = true) }
+                if (index >= 0) playTrack(index)
+            }
+            else -> {
+                stopped = false
+                playRequestedAt = SystemClock.elapsedRealtime()
+                remotes.getValue(case.source).playAlbum(case.album, case.artist)
+            }
+        }
+        tick()
+    }
+
+    fun removeCase(case: TapeCase) {
+        caseStore.remove(case.id)
+        tick()
+    }
+
+    suspend fun caseCover(case: TapeCase): ImageBitmap? = caseStore.cover(case)
+
+    // endregion
+
     private var queueFor: List<LocalTrack>? = null
     private var queueCache: List<QueueEntry> = emptyList()
 
@@ -509,6 +545,11 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
         }
         val np = state.nowPlaying
         updateLabel(np)
+        // An album earns its case on the shelf once it's actually playing.
+        val album = np.album.orEmpty()
+        if (state.isPlaying && album.isNotBlank()) {
+            caseStore.note(source, album, np.artist.orEmpty(), np.artwork, label.stripe.toArgb(), label.stripe2.toArgb())
+        }
         val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
         val volume = audio.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / max
         val prev = _ui.value
@@ -536,6 +577,8 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
             keySounds = prefs.getBoolean(KEY_SOUNDS, true),
             haptics = prefs.getBoolean(KEY_HAPTICS, true),
             apple = apple.value,
+            cases = caseStore.cases.value,
+            inDeckCaseId = if (album.isNotBlank() && state.status == SourceStatus.Ready) caseStore.idOf(source, album) else null,
         )
     }
 
@@ -573,6 +616,7 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
         local.release()
         remotes.values.forEach { it.release() }
         appleKit?.release()
+        caseStore.release()
     }
 
     companion object {

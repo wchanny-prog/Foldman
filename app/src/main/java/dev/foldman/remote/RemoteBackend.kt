@@ -10,9 +10,11 @@ import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.net.Uri
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.MediaStore
 import android.view.KeyEvent
 import androidx.core.app.NotificationManagerCompat
 import dev.foldman.deck.BackendState
@@ -199,6 +201,32 @@ class RemoteBackend(private val context: Context, source: Source) : DeckBackend 
     override fun playQueueItem(id: Long) { controller?.transportControls?.skipToQueueItem(id) }
     override fun skipToNext() { controller?.transportControls?.skipToNext() }
     override fun skipToPrevious() { controller?.transportControls?.skipToPrevious() }
+
+    /**
+     * Asks the streaming app to play an album. Uses the app's own play-from-search when its media
+     * session offers it; otherwise opens the app on a search for the album, to be started there.
+     */
+    fun playAlbum(album: String, artist: String) {
+        val query = listOf(album, artist).filter { it.isNotBlank() }.joinToString(" ")
+        val c = controller
+        val canSearch = (c?.playbackState?.actions ?: 0L) and PlaybackState.ACTION_PLAY_FROM_SEARCH != 0L
+        if (c != null && canSearch) {
+            val extras = Bundle().apply {
+                putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE)
+                putString(MediaStore.EXTRA_MEDIA_ALBUM, album)
+                if (artist.isNotBlank()) putString(MediaStore.EXTRA_MEDIA_ARTIST, artist)
+            }
+            c.transportControls.playFromSearch(query, extras)
+            return
+        }
+        val url = when (pkg) {
+            Source.APPLE_MUSIC.packageName -> "https://music.apple.com/search?term=" + Uri.encode(query)
+            else -> "https://music.youtube.com/search?q=" + Uri.encode(query)
+        }
+        val view = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
+        runCatching { context.startActivity(Intent(view).setPackage(pkg)) }.onFailure { openApp() }
+    }
 
     /** Opens the streaming app, beside Foldman when the screen is unfolded. */
     fun openApp() {

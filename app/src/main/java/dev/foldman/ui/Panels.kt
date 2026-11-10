@@ -71,12 +71,12 @@ fun Modifier.glassPanel(corner: Dp = 18.dp): Modifier = drawWithCache {
     }
 }
 
-/** Library band: sources, then albums (folders) or the streaming app's state, then the queue. */
+/** Library band: sources, then albums (folders) or the streaming app's state, then the shelf of tape cases. */
 @Composable
 fun LibraryBand(ui: DeckUi, actions: ShelfActions, onPlayQueue: (Long) -> Unit, modifier: Modifier = Modifier) {
     Row(modifier.glassPanel().padding(14.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         // Scrolls if the panel is ever too short for every source.
-        Column(Modifier.weight(0.3f).fillMaxHeight().verticalScroll(rememberScrollState())) {
+        Column(Modifier.weight(0.24f).fillMaxHeight().verticalScroll(rememberScrollState())) {
             Text("Sources", style = Header)
             Spacer(Modifier.height(6.dp))
             Source.entries.forEach { s ->
@@ -99,7 +99,7 @@ fun LibraryBand(ui: DeckUi, actions: ShelfActions, onPlayQueue: (Long) -> Unit, 
                 }
             }
         }
-        Column(Modifier.weight(0.36f).fillMaxHeight()) {
+        Column(Modifier.weight(0.28f).fillMaxHeight()) {
             when (ui.source) {
                 Source.LOCAL -> Albums(ui, actions)
                 Source.APPLE_MUSIC -> {
@@ -110,11 +110,8 @@ fun LibraryBand(ui: DeckUi, actions: ShelfActions, onPlayQueue: (Long) -> Unit, 
                 else -> RemoteState(ui, actions)
             }
         }
-        Column(Modifier.weight(0.34f).fillMaxHeight()) {
-            Text("Queue", style = Header)
-            Spacer(Modifier.height(8.dp))
-            QueueList(ui, onPlayQueue)
-        }
+        // The shelf of cassette cases takes the widest share; what's up next is in the now-playing band.
+        CaseShelf(ui.cases, ui.inDeckCaseId, actions.cases, Modifier.weight(0.48f).fillMaxHeight(), caseWidth = 76.dp)
     }
 }
 
