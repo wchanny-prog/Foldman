@@ -32,7 +32,7 @@ seed
 launch
 shot cover 6
 # The TAPES button, top left, opens the shelf.
-adb shell -n input tap 110 235
+adb shell -n input tap 130 112
 shot cover-shelf 4
 adb shell -n input keyevent KEYCODE_BACK
 

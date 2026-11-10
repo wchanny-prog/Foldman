@@ -263,29 +263,23 @@ private val OnEnamel = EngravedCaps.copy(color = Color(0xFFD9DCE0))
 /** The folded phone: an upright portable player. */
 @Composable
 private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, onTapes: () -> Unit, modifier: Modifier) {
-    // The player stands a little below the top of the screen, clear of the camera, so its keys
-    // can rise out of its top edge.
-    BoxWithConstraints(modifier.windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top)).padding(top = 6.dp)) {
-        val capH = maxHeight * 0.085f
-        TopKeyRow(
-            ui, deck.stop, deck.rewind, deck.play, deck.fastForward, deck.pause,
-            Modifier.align(Alignment.TopStart).fillMaxWidth(0.73f),
-        )
-        Row(Modifier.fillMaxSize().padding(top = TopKeyZone - TopKeyFoot).paintedBody(Enamel, capHeight = capH, corner = 14.dp)) {
+    BoxWithConstraints(modifier) {
+        val capH = maxHeight * 0.12f
+        Row(Modifier.fillMaxSize().paintedBody(Enamel, capHeight = capH, corner = 0.dp, framed = false)) {
             Column(
                 Modifier
                     .weight(0.73f)
                     .fillMaxHeight()
-                    .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start))
+                    .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Start))
                     .padding(start = 20.dp, end = 14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Row(Modifier.fillMaxWidth().height(capH), verticalAlignment = Alignment.CenterVertically) {
-                    HotlineButton(onTapes, Modifier.size(44.dp, 22.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
+                Box(Modifier.fillMaxWidth().height(capH)) {
+                    // Inset from the corner so the display's rounded corner doesn't clip it.
+                    HotlineButton(onTapes, Modifier.align(Alignment.TopStart).padding(top = 22.dp, start = 8.dp).size(44.dp, 22.dp))
+                    Text("TAPES", style = OnEnamel.copy(fontSize = 7.sp), modifier = Modifier.align(Alignment.TopStart).padding(top = 48.dp, start = 14.dp))
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(18.dp))
                 BrandMark(30.sp)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -315,14 +309,14 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
 @Composable
 private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
     BoxWithConstraints(modifier) {
+        val keyH = ((maxHeight - 400.dp) / 5 - 18.dp).coerceIn(34.dp, 64.dp)
         // Runs the full height of the screen; the padding keeps controls clear of the rounded corners.
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(top = 3.dp, end = 3.dp, bottom = 3.dp)
-                .chassis(corner = 12.dp, screws = false)
-                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.End))
-                .padding(start = 10.dp, end = 12.dp, top = 22.dp, bottom = 24.dp),
+                .chassis(corner = 0.dp, screws = false)
+                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.End))
+                .padding(start = 10.dp, end = 12.dp, top = 28.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             MicGrille(Modifier.fillMaxWidth().height(26.dp))
@@ -334,7 +328,9 @@ private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
                 MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 26.dp)
                 MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 26.dp, enabled = ui.hasNext)
             }
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(10.dp))
+            TransportKeys(ui, deck.stop, deck.rewind, deck.play, deck.fastForward, deck.pause, Modifier.fillMaxWidth(), keyHeight = keyH, vertical = true)
+            Spacer(Modifier.height(12.dp))
             Text("VOLUME", style = EngravedCaps.copy(fontSize = 7.sp))
             VolumeSlider(ui.volume, deck.volume, Modifier.fillMaxWidth().weight(1f))
             Spacer(Modifier.height(8.dp))
@@ -347,13 +343,7 @@ private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
 /** The unfolded phone: the player laid down as a deck. */
 @Composable
 private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: DeckViewModel, modifier: Modifier) {
-  Box(modifier) {
-    TopKeyRow(
-        ui, deck.stop, deck.rewind, deck.play, deck.fastForward, deck.pause,
-        Modifier.align(Alignment.TopStart).fillMaxWidth(0.74f),
-        keyWidth = 42.dp, gap = 18.dp,
-    )
-    Row(Modifier.fillMaxSize().padding(top = TopKeyZone - TopKeyFoot).paintedBody(Enamel, corner = 22.dp)) {
+    Row(modifier.paintedBody(Enamel, corner = 22.dp)) {
         Column(Modifier.weight(0.74f).fillMaxHeight().padding(horizontal = 20.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 BrandMark(22.sp)
@@ -385,14 +375,11 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
                 EjectArrow({ deck.stop() }, Modifier.size(26.dp, 50.dp))
             }
             Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.Bottom) {
                 MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 30.dp, captionColor = OnEnamel.color)
-                Text(
-                    listOf(ui.title, ui.artist).filter { it.isNotBlank() }.joinToString("  —  ").ifBlank { "NO TAPE" }.uppercase(),
-                    style = OnEnamel.copy(fontSize = 10.sp, letterSpacing = 1.5.sp),
-                    maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                )
+                Spacer(Modifier.width(10.dp))
+                TransportKeys(ui, deck.stop, deck.rewind, deck.play, deck.fastForward, deck.pause, Modifier.weight(1f), keyHeight = 58.dp)
+                Spacer(Modifier.width(10.dp))
                 MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 30.dp, enabled = ui.hasNext, captionColor = OnEnamel.color)
             }
         }
@@ -423,5 +410,4 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
             }
         }
     }
-  }
 }
