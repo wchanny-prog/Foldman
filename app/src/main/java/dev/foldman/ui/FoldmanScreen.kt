@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
 private enum class Posture { Cover, Unfolded, Tabletop }
 
 /** Body enamel: the blue of the first portable cassette players. */
-private val Enamel = Color(0xFF2F6FB5)
+private val Enamel = Color(0xFF2B62A6)
 
 /**
  * Picks a layout from the hinge:
@@ -258,7 +258,6 @@ private class DeckControls(vm: DeckViewModel) {
     val volume = vm::setVolume
 }
 
-private val Serif = TextStyle(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Black, color = Color(0xFFF1F3F6), letterSpacing = 2.sp)
 private val OnEnamel = EngravedCaps.copy(color = Color(0xFFDCE6F2))
 
 /** The folded phone: an upright portable player. */
@@ -281,8 +280,8 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
                     Text("TAPES", style = OnEnamel.copy(fontSize = 7.sp), modifier = Modifier.align(Alignment.TopStart).padding(top = 48.dp, start = 14.dp))
                 }
                 Spacer(Modifier.height(18.dp))
-                Text("STEREO", style = Serif.copy(fontSize = 30.sp))
-                Spacer(Modifier.height(18.dp))
+                BrandMark(30.sp)
+                Spacer(Modifier.height(16.dp))
                 Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                         TapeWindow(ui, anim, vertical = true)
@@ -297,7 +296,8 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(10.dp))
-                Wordmark("FOLDMAN", 40.sp)
+                ModelMark(38.sp)
+                Text("STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp))
                 Spacer(Modifier.height(20.dp))
             }
             SideStrip(ui, deck, Modifier.weight(0.27f).fillMaxHeight())
@@ -346,11 +346,11 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
     Row(modifier.paintedBody(Enamel, corner = 22.dp)) {
         Column(Modifier.weight(0.74f).fillMaxHeight().padding(horizontal = 20.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("STEREO", style = Serif.copy(fontSize = 24.sp))
+                BrandMark(22.sp)
                 Spacer(Modifier.weight(1f))
-                Text("FM-F8 · STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 8.sp))
+                Text("WB-F8 · STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 8.sp))
                 Spacer(Modifier.width(16.dp))
-                Wordmark("FOLDMAN", 26.sp)
+                ModelMark(26.sp)
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

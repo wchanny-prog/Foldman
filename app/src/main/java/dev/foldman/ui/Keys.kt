@@ -66,8 +66,8 @@ fun TransportKeys(
     vertical: Boolean = false,
 ) {
     val t = ui.transport
-    // Captions sit on the silver strip when stacked, on the dark key well otherwise.
-    val cc = if (vertical) DeckColors.Engrave else Color(0xFF9EA1A7)
+    // The keys sit in a dark well cut into the metal, with their captions printed inside it.
+    val cc = Color(0xFFA6A9AF)
     val keys: @Composable (Modifier, Modifier) -> Unit = { k, play ->
         DeckKey(KeySymbol.REW, "REW", latched = t == Transport.REWINDING, onPress = onRewind, modifier = k, height = keyHeight, captionColor = cc)
         DeckKey(
@@ -75,11 +75,14 @@ fun TransportKeys(
             modifier = play, height = keyHeight, captionColor = cc, accent = true,
         )
         DeckKey(KeySymbol.FF, "FF", latched = t == Transport.FAST_FORWARDING, onPress = onFastForward, modifier = k, height = keyHeight, captionColor = cc)
-        DeckKey(KeySymbol.PAUSE, "PAUSE", latched = t == Transport.PAUSED, onPress = onPause, modifier = k, height = keyHeight, captionColor = cc, mark = Color(0xFF3E9C5A))
-        DeckKey(KeySymbol.STOP, "STOP·EJECT", latched = false, onPress = onStop, modifier = k, height = keyHeight, captionColor = cc, mark = Color(0xFFC8352B))
+        DeckKey(KeySymbol.PAUSE, "PAUSE", latched = t == Transport.PAUSED, onPress = onPause, modifier = k, height = keyHeight, captionColor = cc, mark = Color(0xFF2F7D49))
+        DeckKey(KeySymbol.STOP, "STOP·EJECT", latched = false, onPress = onStop, modifier = k, height = keyHeight, captionColor = cc, mark = Color(0xFFB92F26))
     }
     if (vertical) {
-        Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) { keys(Modifier.fillMaxWidth(), Modifier.fillMaxWidth()) }
+        Column(
+            modifier.recess(10.dp).padding(horizontal = 6.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+        ) { keys(Modifier.fillMaxWidth(), Modifier.fillMaxWidth()) }
     } else {
         Row(
             modifier.recess(16.dp).padding(horizontal = 8.dp, vertical = 8.dp),
@@ -152,39 +155,53 @@ fun DeckKey(
 private fun DrawScope.drawKey(symbol: KeySymbol, depth: Float, accent: Boolean, latched: Boolean, mark: Color?) {
     val w = size.width
     val h = size.height
-    val travel = h * 0.16f
-    val front = h * 0.17f * (1f - depth * 0.85f)
+    val travel = h * 0.14f
+    val frontFull = h * 0.2f
+    val front = frontFull * (1f - depth * 0.85f)
     val top = travel * depth
-    val faceH = h - travel - h * 0.17f
-    val r = CornerRadius(w * 0.09f)
+    val faceH = h - travel - frontFull
+    // Machined, nearly square corners: these are milled metal keys, not soft plastic ones.
+    val r = CornerRadius(minOf(w, h) * 0.07f)
+    val shade = 0.14f * depth
+    fun metal(c: Long) = lerp(Color(c), Color.Black, shade)
     // Slot shadow under the key.
-    drawRoundRect(Color.Black.copy(alpha = 0.7f), topLeft = Offset(-1f, top + 2f), size = Size(w + 2f, faceH + front + 2f), cornerRadius = r)
+    drawRoundRect(Color.Black.copy(alpha = 0.8f), topLeft = Offset(-1.5f, top + 2f), size = Size(w + 3f, faceH + front + 3f), cornerRadius = r)
     // Front edge, seen as the key stands proud of the slot.
     drawRoundRect(
-        Brush.verticalGradient(listOf(Color(0xFF8D9095), Color(0xFF55585C)), top + faceH - r.x, top + faceH + front),
-        topLeft = Offset(0f, top + faceH - r.x), size = Size(w, front + r.x), cornerRadius = r,
+        Brush.verticalGradient(listOf(Color(0xFF7C7F85), Color(0xFF3C3F43)), top + faceH - r.y, top + faceH + front),
+        topLeft = Offset(0f, top + faceH - r.y), size = Size(w, front + r.y), cornerRadius = r,
     )
-    val base = if (accent) Color(0xFFD9DBDE) else Color(0xFFCFD1D5)
-    val shade = 0.12f * depth
     drawRoundRect(
-        Brush.verticalGradient(
-            listOf(lerp(Color(0xFFF7F8F9), Color.Black, shade), lerp(base, Color.Black, shade), lerp(Color(0xFFA9ACB1), Color.Black, shade)),
-            top, top + faceH,
-        ),
+        Brush.verticalGradient(listOf(metal(0xFFF7F8F9), metal(0xFFD3D5D9), metal(0xFFB3B6BB)), top, top + faceH),
         topLeft = Offset(0f, top), size = Size(w, faceH), cornerRadius = r,
     )
-    // Fine ribbing across the top of the cap for grip.
-    for (i in 1..4) {
-        val y = top + faceH * 0.08f * i
-        drawLine(Color.Black.copy(alpha = 0.07f), Offset(w * 0.12f, y), Offset(w * 0.88f, y), 1f)
+    // Brushing along the cap.
+    val lines = (faceH / 3.2f).toInt().coerceAtLeast(2)
+    for (i in 1 until lines) {
+        val y = top + faceH * i / lines
+        drawLine(if (i % 2 == 0) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.05f), Offset(w * 0.03f, y), Offset(w * 0.97f, y), 0.8f)
     }
-    drawRoundRect(Color.White.copy(alpha = 0.8f), topLeft = Offset(0.8f, top + 0.8f), size = Size(w - 1.6f, faceH - 1.6f), cornerRadius = r, style = Stroke(1.2f))
-    if (accent || mark != null) {
-        drawRoundRect(mark ?: DeckColors.Accent, topLeft = Offset(w * 0.18f, top + faceH - h * 0.1f), size = Size(w * 0.64f, h * 0.035f), cornerRadius = CornerRadius(h))
+    // The finger dish: a shallow hollow milled into the cap, dark at its upper lip and bright at its lower one.
+    val inset = minOf(w, faceH) * 0.13f
+    val dishTop = top + inset * 0.75f
+    val dish = Size(w - inset * 2f, faceH - inset * 1.5f)
+    val dr = CornerRadius(r.x * 0.75f)
+    drawRoundRect(
+        Brush.verticalGradient(listOf(metal(0xFFA4A7AC), metal(0xFFCBCDD1), metal(0xFFECEDEF)), dishTop, dishTop + dish.height),
+        topLeft = Offset(inset, dishTop), size = dish, cornerRadius = dr,
+    )
+    drawRoundRect(Color.White.copy(alpha = 0.75f), topLeft = Offset(inset, dishTop + 1.4f), size = dish, cornerRadius = dr, style = Stroke(1.1f))
+    drawRoundRect(Color.Black.copy(alpha = 0.3f), topLeft = Offset(inset, dishTop), size = dish, cornerRadius = dr, style = Stroke(1.1f))
+    drawRoundRect(Color.White.copy(alpha = 0.85f), topLeft = Offset(0.8f, top + 0.8f), size = Size(w - 1.6f, faceH - 1.6f), cornerRadius = r, style = Stroke(1.2f))
+    // The symbol is engraved and filled with paint: a bright lower lip, then the paint.
+    val c = Offset(w / 2f, dishTop + dish.height * 0.5f)
+    val s = minOf(w, dish.height) * 0.2f
+    val ink = when {
+        mark != null -> mark
+        accent -> if (latched) DeckColors.Accent else DeckColors.AccentDeep
+        else -> DeckColors.Engrave
     }
-    val c = Offset(w / 2f, top + faceH * 0.48f)
-    val s = minOf(w, faceH) * 0.16f
-    val ink = if (accent && latched) DeckColors.AccentDeep else DeckColors.Engrave
+    drawSymbol(symbol, c + Offset(0f, 1.4f), s, Color.White.copy(alpha = 0.85f))
     drawSymbol(symbol, c, s, ink)
 }
 

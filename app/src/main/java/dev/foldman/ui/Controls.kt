@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Shadow
@@ -42,6 +43,7 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -50,6 +52,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.foldman.R
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -71,59 +74,95 @@ fun Modifier.quarterTurn(enabled: Boolean = true): Modifier = if (!enabled) this
     }
 }
 
-/** Enamel-painted metal, like the coloured walkmans: a soft gradient with a fine powder-coat grain. */
+/**
+ * Anodised aluminium in a colour, like the painted portables of 1980: a deep gradient, fine brushing
+ * along the case, and a soft band of light across it.
+ */
 fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp, framed: Boolean = true): Modifier = drawWithCache {
     val r = CornerRadius(corner.toPx())
     val rnd = Random(5)
-    val grain = Path()
-    repeat((size.width * size.height / 260f).toInt().coerceAtMost(30000)) {
-        val x = rnd.nextFloat() * size.width
-        val y = rnd.nextFloat() * size.height
-        grain.addRect(androidx.compose.ui.geometry.Rect(x, y, x + 1.2f, y + 1.2f))
+    val bright = Path()
+    val dim = Path()
+    var y = 0f
+    while (y < size.height) {
+        val x0 = rnd.nextFloat() * size.width * 0.6f
+        val x1 = minOf(size.width, x0 + size.width * (0.25f + rnd.nextFloat() * 0.75f))
+        val p = if (rnd.nextBoolean()) bright else dim
+        p.moveTo(x0, y)
+        p.lineTo(x1, y)
+        y += 0.9f + rnd.nextFloat() * 1.8f
     }
-    val body = Brush.verticalGradient(listOf(lerp(color, Color.White, 0.16f), color, lerp(color, Color.Black, 0.22f)))
+    val outline = Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(0f, 0f, size.width, size.height, r)) }
+    val body = Brush.verticalGradient(
+        0f to lerp(color, Color.White, 0.20f), 0.22f to lerp(color, Color.White, 0.04f), 0.6f to lerp(color, Color.Black, 0.12f), 1f to lerp(color, Color.Black, 0.38f),
+    )
+    val sheen = Brush.linearGradient(
+        0f to Color.Transparent, 0.22f to Color.White.copy(alpha = 0.13f), 0.36f to Color.Transparent,
+        0.66f to Color.Transparent, 0.8f to Color.White.copy(alpha = 0.06f), 1f to Color.Transparent,
+        start = Offset(0f, 0f), end = Offset(size.width, size.height * 0.85f),
+    )
     val cap = capHeight.toPx()
     onDrawBehind {
         // Unframed, the body is the whole screen: no drop shadow and no lit edge.
         if (framed) drawRoundRect(Color.Black.copy(alpha = 0.5f), topLeft = Offset(0f, 8f), cornerRadius = r)
-        drawRoundRect(body, cornerRadius = r)
-        drawPath(grain, Color.White.copy(alpha = 0.045f))
-        if (cap > 0f) {
-            // The top cap is a separate, slightly lighter piece with a seam below it.
-            drawRoundRect(
-                Brush.verticalGradient(listOf(lerp(color, Color.White, 0.3f), lerp(color, Color.White, 0.12f)), 0f, cap),
-                size = Size(size.width, cap + r.x), cornerRadius = r,
-            )
-            drawRect(lerp(color, Color.White, 0.12f), Offset(0f, cap), Size(size.width, r.x))
-            drawRect(body, Offset(0f, cap), Size(size.width, r.x))
-            drawLine(Color.Black.copy(alpha = 0.35f), Offset(0f, cap), Offset(size.width, cap), 2f)
-            drawLine(Color.White.copy(alpha = 0.25f), Offset(0f, cap + 2f), Offset(size.width, cap + 2f), 1f)
+        clipPath(outline) {
+            drawRect(body)
+            drawPath(bright, Color.White.copy(alpha = 0.055f), style = Stroke(0.9f))
+            drawPath(dim, Color.Black.copy(alpha = 0.07f), style = Stroke(0.9f))
+            if (cap > 0f) {
+                // The top cap is a separate piece: a shade lighter, with a machined seam below it.
+                drawRect(Color.White.copy(alpha = 0.07f), size = Size(size.width, cap))
+                drawLine(Color.Black.copy(alpha = 0.45f), Offset(0f, cap), Offset(size.width, cap), 2.5f)
+                drawLine(Color.White.copy(alpha = 0.28f), Offset(0f, cap + 2.5f), Offset(size.width, cap + 2.5f), 1.2f)
+            }
+            drawRect(sheen)
+            // The case rolls away at its edges.
+            drawRect(Brush.horizontalGradient(0f to Color.Black.copy(alpha = 0.22f), 0.05f to Color.Transparent, 0.95f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.18f)))
         }
-        drawRoundRect(
-            Brush.linearGradient(listOf(Color.White.copy(alpha = 0.10f), Color.Transparent, Color.Black.copy(alpha = 0.12f)), Offset.Zero, Offset(size.width, size.height)),
-            cornerRadius = r,
-        )
-        if (framed) drawRoundRect(Color.White.copy(alpha = 0.35f), cornerRadius = r, style = Stroke(2f))
+        if (framed) {
+            drawRoundRect(Color.White.copy(alpha = 0.45f), cornerRadius = r, style = Stroke(2f))
+            drawRoundRect(
+                Color.Black.copy(alpha = 0.3f), topLeft = Offset(2f, 2f), size = Size(size.width - 4f, size.height - 4f),
+                cornerRadius = CornerRadius((r.x - 2f).coerceAtLeast(0f)), style = Stroke(1.5f),
+            )
+        }
     }
 }
 
-/** Raised chrome lettering for the name on the case. */
+/** The maker's name: a wide-set slab serif in raised chrome. */
+val BrandSlab = FontFamily(Font(R.font.bevan))
+/** The model name: a broad, squared sans. */
+val ModelSans = FontFamily(Font(R.font.russo_one))
+
+private val Chrome = Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFE3E6EA), Color(0xFFAAB0B8), Color(0xFFECEEF1)))
+
 @Composable
-fun Wordmark(text: String, size: TextUnit, modifier: Modifier = Modifier, light: Boolean = true) {
+fun BrandMark(size: TextUnit, modifier: Modifier = Modifier) {
     Text(
-        text,
+        "WUSO",
         modifier,
         style = TextStyle(
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Black,
+            fontFamily = BrandSlab,
             fontSize = size,
-            letterSpacing = size * 0.04f,
-            brush = if (light) {
-                Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFDDE1E6), Color(0xFFA9AFB7), Color(0xFFE9ECEF)))
-            } else {
-                Brush.verticalGradient(listOf(Color(0xFF55585E), Color(0xFF2B2D31)))
-            },
-            shadow = Shadow(Color.Black.copy(alpha = if (light) 0.45f else 0.2f), Offset(0f, 3f), 4f),
+            letterSpacing = size * 0.16f,
+            brush = Chrome,
+            shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 2.5f), 3f),
+        ),
+        maxLines = 1,
+    )
+}
+
+@Composable
+fun ModelMark(size: TextUnit, modifier: Modifier = Modifier) {
+    Text(
+        "WALKBRO",
+        modifier,
+        style = TextStyle(
+            fontFamily = ModelSans,
+            fontSize = size,
+            letterSpacing = size * 0.05f,
+            brush = Chrome,
+            shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 3f), 4f),
         ),
         maxLines = 1,
     )

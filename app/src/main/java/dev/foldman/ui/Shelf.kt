@@ -252,7 +252,7 @@ private fun RemoteCard(ui: DeckUi, actions: ShelfActions) {
     when (ui.status) {
         SourceStatus.NeedsAccess -> Column {
             Prompt(
-                "Foldman plays $app by driving its media session, which Android only shares with apps that have notification access. Turn on Foldman in the list that opens.",
+                "Walkbro plays $app by driving its media session, which Android only shares with apps that have notification access. Turn on WUSO Walkbro in the list that opens.",
                 "Grant notification access", actions.openAccess,
             )
             Spacer(Modifier.height(8.dp))

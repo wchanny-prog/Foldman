@@ -195,7 +195,7 @@ private fun RemoteState(ui: DeckUi, actions: ShelfActions, showHeader: Boolean =
     }
     val (text, button, action) = when (ui.status) {
         SourceStatus.NeedsAccess -> Triple(
-            "Foldman plays $app through its media session, which Android only shares with apps that have notification access. If the switch is greyed out: App info → ⋮ → Allow restricted settings.",
+            "Walkbro plays $app through its media session, which Android only shares with apps that have notification access. If the switch is greyed out: App info → ⋮ → Allow restricted settings.",
             "Grant access", actions.openAccess,
         )
         SourceStatus.NotInstalled -> Triple("$app isn't installed.", "Get $app", { actions.installApp(ui.source) })
