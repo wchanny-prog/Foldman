@@ -1,5 +1,6 @@
 package dev.foldman.ui
 
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.CompositingStrategy
@@ -363,64 +364,65 @@ private val OnEnamel: TextStyle
 /** The folded phone: an upright portable player. */
 @Composable
 private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, onTapes: (() -> Unit)?, modifier: Modifier) {
-    BoxWithConstraints(modifier) {
-        val capH = maxHeight * 0.085f
-        val look = LocalSkin.current.look
-        Row(Modifier.fillMaxSize().paintedBody(Enamel, capHeight = capH, corner = 0.dp, framed = false, brushed = look.brushed)) {
-            Column(
-                Modifier
-                    .weight(0.83f)
-                    .fillMaxHeight()
-                    .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Start))
-                    .padding(start = 12.dp, end = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                // Inset from the corner so the display's rounded corner doesn't clip it.
-                Row(Modifier.fillMaxWidth().height(capH).padding(start = 8.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Folded, this opens the tape shelf. Opened flat the shelf is already beside the player.
-                    if (onTapes != null) {
-                        HotlineButton(onTapes, Modifier.size(44.dp, 22.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
-                    }
-                }
-                Spacer(Modifier.height(6.dp))
-                // The whole front of the case is the door: lettering, window and all. It is hinged
-                // along its foot and tips out toward you, with the tape riding in it.
-                Box(Modifier.weight(1f).fillMaxWidth()) {
-                    DoorBay(Modifier.matchParentSize().padding(2.dp))
-                    Column(
-                        Modifier
-                            .matchParentSize()
-                            .graphicsLayer {
-                                transformOrigin = TransformOrigin(0.5f, 1f)
-                                rotationX = -anim.door.value * 24f
-                                cameraDistance = 30f * density
-                            }
-                            .paintedBody(Enamel, corner = 10.dp, brushed = look.brushed),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Spacer(Modifier.height(10.dp))
-                        BrandMark(30.sp)
-                        Spacer(Modifier.height(10.dp))
-                        // The window takes everything the lettering leaves: this is a cassette player first.
-                        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            TapeWindow(ui, anim, vertical = true, swingLid = false)
+    val look = LocalSkin.current.look
+    Row(modifier.paintedBody(Enamel, corner = 0.dp, framed = false, brushed = look.brushed)) {
+        // Drawn above the strip, so the open door passes in front of the keys beside it.
+        Column(Modifier.weight(0.83f).fillMaxHeight().zIndex(1f).padding(end = 5.dp)) {
+            // The whole front of the case is the door: lettering, window and all. It runs flush to
+            // the top of the screen and out to its edge, where the hinge is; the long side beside
+            // the keys is the one that swings out toward you, with the tape riding in the door.
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                DoorBay(Modifier.matchParentSize().padding(end = 2.dp, bottom = 2.dp))
+                Column(
+                    Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            transformOrigin = TransformOrigin(0f, 0.5f)
+                            rotationY = -anim.door.value * 22f
+                            cameraDistance = 30f * density
                         }
-                        Spacer(Modifier.height(10.dp))
-                        ModelMark(38.sp)
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            look.tag?.let { "$it · STEREO CASSETTE PLAYER" } ?: "STEREO CASSETTE PLAYER",
-                            style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp, color = if (look.tag != null) look.tagColor else OnEnamel.color),
-                        )
-                        Spacer(Modifier.height(12.dp))
+                        .paintedBody(Enamel, corner = 8.dp, brushed = look.brushed)
+                        // The door itself reaches the edges; its lettering keeps clear of the camera.
+                        .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Start))
+                        .padding(start = 10.dp, end = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Spacer(Modifier.height(16.dp))
+                    BrandMark(30.sp)
+                    Spacer(Modifier.height(10.dp))
+                    // The window takes everything the lettering leaves: this is a cassette player first.
+                    Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        TapeWindow(ui, anim, vertical = true, swingLid = false)
                     }
+                    Spacer(Modifier.height(10.dp))
+                    ModelMark(38.sp)
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        look.tag?.let { "$it · STEREO CASSETTE PLAYER" } ?: "STEREO CASSETTE PLAYER",
+                        style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp, color = if (look.tag != null) look.tagColor else OnEnamel.color),
+                    )
+                    Spacer(Modifier.height(12.dp))
                 }
+            }
+            // Folded, the button in the bottom corner opens the tape shelf. Opened flat the shelf is
+            // already beside the player. Inset so the display's rounded corner doesn't clip it.
+            if (onTapes != null) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start))
+                        .padding(start = 22.dp, top = 9.dp, bottom = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    HotlineButton(onTapes, Modifier.size(44.dp, 22.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
+                }
+            } else {
                 Spacer(Modifier.height(10.dp))
             }
-            SideStrip(ui, deck, Modifier.weight(0.17f).fillMaxHeight())
         }
+        SideStrip(ui, deck, Modifier.weight(0.17f).fillMaxHeight())
     }
 }
 

@@ -35,7 +35,7 @@ launch
 shot cover 6
 adb shell -n dumpsys activity activities | grep -i -m3 "ResumedActivity\|mFocusedApp" || true
 # The TAPES button, top left, opens the shelf.
-adb shell -n input tap 115 95
+sz=$(adb shell -n wm size | tail -1 | grep -o "[0-9]*x[0-9]*"); adb shell -n input tap 115 $(( ${sz#*x} - 62 ))
 shot cover-shelf 4
 adb shell -n input keyevent KEYCODE_BACK
 
@@ -82,6 +82,6 @@ adb shell -n am force-stop dev.foldman
 adb shell -n wm size 1080x2520
 launch
 shot sport-cover 6
-adb shell -n input tap 115 95
+sz=$(adb shell -n wm size | tail -1 | grep -o "[0-9]*x[0-9]*"); adb shell -n input tap 115 $(( ${sz#*x} - 62 ))
 shot sport-cover-shelf 4
 ls -la shots
