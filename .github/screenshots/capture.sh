@@ -48,12 +48,19 @@ shot unfolded 6
 size=$(adb shell -n wm size | tail -1 | grep -o '[0-9]*x[0-9]*')
 W=${size%x*}; H=${size#*x}
 # The third spine is a local-folder tape, which opens no other app.
-# Slowed down, so the stills land inside the sequence.
-adb shell -n settings put global animator_duration_scale 4
-sleep 1
+# Filmed at full speed, then cut into stills on the runner: nothing competes with the app for
+# the emulator's CPU while the sequence plays.
+adb shell -n screenrecord --time-limit 5 --bit-rate 8000000 /sdcard/load.mp4 &
+rec=$!
+sleep 1.5
 adb shell -n input tap $((W * 24 / 100)) $((H * 295 / 1000))
-for i in 1 2 3 4 5; do adb shell -n screencap -p /sdcard/load$i.png; done
-for i in 1 2 3 4 5; do adb pull /sdcard/load$i.png "shots/load-$i.png" </dev/null; done
+wait $rec || true
+sleep 1
+adb pull /sdcard/load.mp4 shots/load.mp4 </dev/null || true
+if [ -s shots/load.mp4 ]; then
+  ffmpeg -loglevel error -ss 1.3 -i shots/load.mp4 -vf "fps=8,scale=720:-2" -frames:v 20 shots/load-%02d.jpg </dev/null || true
+  rm -f shots/load.mp4
+fi
 adb shell -n settings put global animator_duration_scale 0
 
 # Unfolded and turned sideways.
