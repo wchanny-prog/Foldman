@@ -1,5 +1,10 @@
 package dev.foldman.ui
 
+import dev.foldman.deck.LabelPalette
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.Job
 import dev.foldman.deck.TapeCase
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -133,8 +138,8 @@ fun FoldmanScreen(
                         anim.insert.animateTo(1f, tween(240))
                         if (fly) {
                             flightT.snapTo(0f)
-                            flight = TapeFlight(case, from!!)
-                            flightT.animateTo(1f, tween(480))
+                            flight = TapeFlight(case, from!!, vm.caseCover(case))
+                            flightT.animateTo(1f, tween(620))
                             flight = null
                         }
                         played = true
@@ -314,7 +319,7 @@ fun FoldmanScreen(
                     )
                 }
             }
-            flight?.let { f -> FlyingTape(f, flightT.value, anim.windowBounds) }
+            flight?.let { f -> FlyingTape(f, flightT.value, anim.windowBounds, ui, anim.reels) }
         }
     }
 }
@@ -530,45 +535,48 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
 }
 
 /** A tape on its way from the rack to the player. */
-private class TapeFlight(val case: TapeCase, val from: Rect)
+private class TapeFlight(val case: TapeCase, val from: Rect, val cover: ImageBitmap?)
 
 /**
- * The tape in mid-air: it leaves its slot as a spine, turns on end as it crosses, and arrives
- * over the open lid as a cassette.
+ * The tape in mid-air. It is the real cassette, wearing the case's cover and colours: it slips
+ * out of its slot in the rack, grows to full size and turns on end as it crosses, and arrives
+ * above the open lid ready to drop in.
  */
 @Composable
-private fun FlyingTape(flight: TapeFlight, t: Float, to: Rect?) {
+private fun FlyingTape(flight: TapeFlight, t: Float, to: Rect?, ui: DeckUi, reels: ReelMotion) {
     if (to == null) return
-    val stripe = Color(flight.case.stripe)
-    val stripe2 = Color(flight.case.stripe2)
+    val measurer = rememberTextMeasurer()
+    val case = flight.case
+    // The same drawing as the tape in the window, labelled for the case it came from.
+    val tape = remember(case.id, flight.cover) {
+        ui.copy(
+            source = case.source,
+            artwork = flight.cover,
+            label = LabelPalette(LabelPalette.Default.paper, Color(case.stripe), Color(case.stripe2), LabelPalette.Default.ink),
+        )
+    }
+    val shell = DeckColors.shell(case.source)
     Canvas(Modifier.fillMaxSize()) {
         val from = flight.from
         val ease = t * t * (3f - 2f * t)
-        // A cassette's proportions, sized to the window it is headed for.
-        val endLong = to.height * 0.62f
-        val endShort = endLong * 0.63f
-        val long = from.width + (endLong - from.width) * ease
-        val short = from.height + (endShort - from.height) * ease
-        val lift = kotlin.math.sin(t * Math.PI).toFloat() * 46.dp.toPx()
+        // It leaves the slot no taller than the spine and ends the size of the tape in the window,
+        // whose glass shows 84 of the cassette's 100 mm.
+        val startLong = from.height * 0.95f * (100f / 64f)
+        val endLong = to.height * (100f / 84f)
+        val long = startLong + (endLong - startLong) * ease
+        val short = long * 0.64f
+        val lift = kotlin.math.sin(t * Math.PI).toFloat() * 40.dp.toPx()
         val cx = from.center.x + (to.center.x - from.center.x) * ease
-        val cy = from.center.y + (to.center.y - to.height * 0.34f - from.center.y) * ease - lift
-        val r = CornerRadius(short * 0.08f)
-        rotate(90f * ease, Offset(cx, cy)) {
-            val tl = Offset(cx - long / 2f, cy - short / 2f)
-            drawRoundRect(Color.Black.copy(alpha = 0.35f), tl + Offset(0f, 10f * (0.4f + lift / 60.dp.toPx())), Size(long, short), r)
-            drawRoundRect(DeckColors.Paper, tl, Size(long, short), r)
-            drawRect(stripe, tl + Offset(0f, short * 0.62f), Size(long, short * 0.1f))
-            drawRect(stripe2, tl + Offset(0f, short * 0.74f), Size(long, short * 0.05f))
-            // The little window and its two hubs fade in as the spine becomes a cassette.
-            val win = Size(long * 0.56f, short * 0.36f)
-            val wtl = Offset(cx - win.width / 2f, cy - short * 0.3f)
-            drawRoundRect(Color(0xFF202225).copy(alpha = ease), wtl, win, CornerRadius(win.height * 0.2f))
-            for (side in listOf(-1f, 1f)) {
-                val c = Offset(cx + side * win.width * 0.27f, wtl.y + win.height / 2f)
-                drawCircle(Color(0xFFD6D8DA).copy(alpha = ease), win.height * 0.34f, c)
-                drawCircle(Color(0xFF1A1B1D).copy(alpha = ease), win.height * 0.2f, c)
+        val cy = from.center.y + (to.center.y - to.height * 0.5f - from.center.y) * ease - lift
+        // Fades in as it clears the slot, and out as the drop into the bay takes over.
+        val alpha = (t / 0.12f).coerceAtMost(1f) * ((1f - t) / 0.14f).coerceIn(0f, 1f)
+        drawContext.canvas.saveLayer(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height), Paint().apply { this.alpha = alpha })
+        // Stood on end the same way round as the tape in the player.
+        rotate(-90f * ease, Offset(cx, cy)) {
+            translate(cx - long / 2f, cy - short / 2f) {
+                drawLooseCassette(tape, reels, shell, measurer, long)
             }
-            drawRoundRect(Color.Black.copy(alpha = 0.3f), tl, Size(long, short), r, style = Stroke(1.5f))
         }
+        drawContext.canvas.restore()
     }
 }

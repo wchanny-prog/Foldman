@@ -157,6 +157,12 @@ fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, 
 }
 
 /** Draws the cassette in its own millimetre space; [u] only scales stroke widths of text. */
+/** The whole cassette, out of the player: [width] pixels long with its top-left corner at the origin. */
+fun DrawScope.drawLooseCassette(ui: DeckUi, reels: ReelMotion, shell: Color, measurer: TextMeasurer, width: Float) {
+    val u = width / 100f
+    withTransform({ scale(u, u, Offset.Zero) }) { drawCassette(ui, reels, shell, measurer, u) }
+}
+
 private fun DrawScope.drawCassette(ui: DeckUi, reels: ReelMotion, shell: Color, measurer: TextMeasurer, u: Float) {
     val light = shell.luminance() > 0.5f
     val shellRR = RoundRect(0f, 0f, 100f, 64f, CornerRadius(3.4f))
