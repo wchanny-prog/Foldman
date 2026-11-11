@@ -7,6 +7,8 @@ set -x
 apk=$(ls app/build/outputs/apk/debug/*.apk | head -n 1)
 adb install -r "$apk"
 adb shell -n pm grant dev.foldman android.permission.POST_NOTIFICATIONS || true
+# No "viewing full screen" tip over the app.
+adb shell -n settings put secure immersive_mode_confirmations confirmed || true
 
 shot() {
   sleep "${2:-3}"
@@ -58,7 +60,7 @@ wait $rec || true
 sleep 1
 adb pull /sdcard/load.mp4 shots/load.mp4 </dev/null || true
 if [ -s shots/load.mp4 ]; then
-  ffmpeg -loglevel error -ss 1.6 -i shots/load.mp4 -vf "fps=8,scale=600:-2" -frames:v 48 shots/load-%02d.jpg </dev/null || true
+  ffmpeg -loglevel error -ss 1.6 -i shots/load.mp4 -vf "fps=8,scale=480:-2" -frames:v 48 shots/load-%02d.png </dev/null || true
   rm -f shots/load.mp4
 fi
 adb shell -n settings put global animator_duration_scale 0
