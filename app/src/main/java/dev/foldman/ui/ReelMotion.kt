@@ -110,6 +110,10 @@ class DeckAnimations {
     val reels = ReelMotion()
     /** 1 = cassette out of the bay, 0 = seated. Seated unless a drop-in is under way. */
     val insert = Animatable(0f)
+    /** 0 = the lid is shut, 1 = swung open to take a tape. */
+    val door = Animatable(0f)
+    /** Where the cassette window sits on screen, for a tape flying in from the rack. */
+    var windowBounds: androidx.compose.ui.geometry.Rect? = null
     /** Short hop when STOP/EJECT is pressed with the tape already stopped. */
     val pop = Animatable(0f)
     var ejectCount by mutableStateOf(0)

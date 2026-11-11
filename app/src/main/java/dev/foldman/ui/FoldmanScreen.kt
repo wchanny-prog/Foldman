@@ -1,5 +1,15 @@
 package dev.foldman.ui
 
+import kotlinx.coroutines.Job
+import dev.foldman.deck.TapeCase
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.Animatable
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.view.HapticFeedbackConstants
@@ -101,8 +111,56 @@ fun FoldmanScreen(
     var shelfOpen by rememberSaveable { mutableStateOf(false) }
     val feel by rememberUpdatedState(ui)
 
+    // Choosing a tape from the rack: the lid swings open, the old tape lifts out, the new one
+    // travels over from its slot and drops in, and the lid shuts on it as it starts to play.
+    var loading by remember { mutableStateOf(false) }
+    var loadJob by remember { mutableStateOf<Job?>(null) }
+    var flight by remember { mutableStateOf<TapeFlight?>(null) }
+    val flightT = remember { Animatable(0f) }
+    val loadCase: (TapeCase, Rect?) -> Unit = remember(vm, anim) {
+        { case, from ->
+            // From the pull-up shelf on the cover screen the player is hidden until the shelf closes,
+            // so only a tape picked from the rack beside the player is shown making the trip.
+            val fly = from != null && !shelfOpen
+            shelfOpen = false
+            loadJob?.cancel()
+            loadJob = scope.launch {
+                loading = true
+                var played = false
+                try {
+                    withTimeoutOrNull(4000) {
+                        anim.door.animateTo(1f, tween(320))
+                        anim.insert.animateTo(1f, tween(240))
+                        if (fly) {
+                            flightT.snapTo(0f)
+                            flight = TapeFlight(case, from!!)
+                            flightT.animateTo(1f, tween(480))
+                            flight = null
+                        }
+                        played = true
+                        vm.playCase(case)
+                        anim.insert.animateTo(0f, spring(dampingRatio = 0.62f, stiffness = 220f))
+                        if (feel.keySounds) sounds.autoStop()
+                        anim.door.animateTo(0f, tween(300))
+                    }
+                    // Animations switched off or stalled: the tape still goes in and plays.
+                    if (!played) vm.playCase(case)
+                } finally {
+                    withContext(NonCancellable) {
+                        flight = null
+                        anim.insert.snapTo(0f)
+                        anim.door.snapTo(0f)
+                        loading = false
+                    }
+                }
+            }
+        }
+    }
+
     // A new tape drops into the deck whenever the source changes (and when the app opens).
     LaunchedEffect(ui.source) {
+        // A tape being loaded from the rack runs its own, longer sequence.
+        if (loading) return@LaunchedEffect
         try {
             anim.insert.snapTo(1f)
             // The drop takes well under a second. If the animation can't run (animations switched
@@ -142,7 +200,7 @@ fun FoldmanScreen(
         )
     }
     val caseActions = remember(vm) {
-        CaseActions(play = vm::playCase, remove = vm::removeCase, cover = { vm.caseCover(it) })
+        CaseActions(play = loadCase, remove = vm::removeCase, cover = { vm.caseCover(it) })
     }
     val shelfActions = remember(vm) {
         ShelfActions(
@@ -246,7 +304,7 @@ fun FoldmanScreen(
                             apple = appleActions,
                             // Loading a tape closes the shelf, so the player is back in view as it starts.
                             cases = CaseActions(
-                                play = { vm.playCase(it); shelfOpen = false },
+                                play = loadCase,
                                 remove = vm::removeCase,
                                 cover = { vm.caseCover(it) },
                             ),
@@ -256,6 +314,7 @@ fun FoldmanScreen(
                     )
                 }
             }
+            flight?.let { f -> FlyingTape(f, flightT.value, anim.windowBounds) }
         }
     }
 }
@@ -466,6 +525,50 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
                 Text("VOLUME", style = EngravedCaps.copy(fontSize = 7.sp))
                 VolumeSlider(ui.volume, deck.volume, Modifier.fillMaxWidth().weight(1f))
             }
+        }
+    }
+}
+
+/** A tape on its way from the rack to the player. */
+private class TapeFlight(val case: TapeCase, val from: Rect)
+
+/**
+ * The tape in mid-air: it leaves its slot as a spine, turns on end as it crosses, and arrives
+ * over the open lid as a cassette.
+ */
+@Composable
+private fun FlyingTape(flight: TapeFlight, t: Float, to: Rect?) {
+    if (to == null) return
+    val stripe = Color(flight.case.stripe)
+    val stripe2 = Color(flight.case.stripe2)
+    Canvas(Modifier.fillMaxSize()) {
+        val from = flight.from
+        val ease = t * t * (3f - 2f * t)
+        // A cassette's proportions, sized to the window it is headed for.
+        val endLong = to.height * 0.62f
+        val endShort = endLong * 0.63f
+        val long = from.width + (endLong - from.width) * ease
+        val short = from.height + (endShort - from.height) * ease
+        val lift = kotlin.math.sin(t * Math.PI).toFloat() * 46.dp.toPx()
+        val cx = from.center.x + (to.center.x - from.center.x) * ease
+        val cy = from.center.y + (to.center.y - to.height * 0.34f - from.center.y) * ease - lift
+        val r = CornerRadius(short * 0.08f)
+        rotate(90f * ease, Offset(cx, cy)) {
+            val tl = Offset(cx - long / 2f, cy - short / 2f)
+            drawRoundRect(Color.Black.copy(alpha = 0.35f), tl + Offset(0f, 10f * (0.4f + lift / 60.dp.toPx())), Size(long, short), r)
+            drawRoundRect(DeckColors.Paper, tl, Size(long, short), r)
+            drawRect(stripe, tl + Offset(0f, short * 0.62f), Size(long, short * 0.1f))
+            drawRect(stripe2, tl + Offset(0f, short * 0.74f), Size(long, short * 0.05f))
+            // The little window and its two hubs fade in as the spine becomes a cassette.
+            val win = Size(long * 0.56f, short * 0.36f)
+            val wtl = Offset(cx - win.width / 2f, cy - short * 0.3f)
+            drawRoundRect(Color(0xFF202225).copy(alpha = ease), wtl, win, CornerRadius(win.height * 0.2f))
+            for (side in listOf(-1f, 1f)) {
+                val c = Offset(cx + side * win.width * 0.27f, wtl.y + win.height / 2f)
+                drawCircle(Color(0xFFD6D8DA).copy(alpha = ease), win.height * 0.34f, c)
+                drawCircle(Color(0xFF1A1B1D).copy(alpha = ease), win.height * 0.2f, c)
+            }
+            drawRoundRect(Color.Black.copy(alpha = 0.3f), tl, Size(long, short), r, style = Stroke(1.5f))
         }
     }
 }

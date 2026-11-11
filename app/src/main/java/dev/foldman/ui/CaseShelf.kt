@@ -40,6 +40,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -65,8 +68,8 @@ private val ShelfCaps = EngravedCaps.copy(color = Color(0xFFB59B80), fontSize = 
 private const val CASE_ASPECT = 70f / 109f
 
 class CaseActions(
-    /** Loads the tape into the deck. */
-    val play: (TapeCase) -> Unit,
+    /** Loads the tape into the deck. The rectangle is where its case sits on screen, when known. */
+    val play: (TapeCase, Rect?) -> Unit,
     val remove: (TapeCase) -> Unit,
     val cover: suspend (TapeCase) -> ImageBitmap?,
 )
@@ -205,10 +208,11 @@ private fun CaseSlot(
     actions: CaseActions,
     content: @Composable () -> Unit,
 ) {
+    var bounds by remember { mutableStateOf<Rect?>(null) }
     Box(
-        Modifier.pointerInput(case.id) {
+        Modifier.onGloballyPositioned { bounds = it.boundsInRoot() }.pointerInput(case.id) {
             detectTapGestures(
-                onTap = { actions.play(case) },
+                onTap = { actions.play(case, bounds) },
                 onLongPress = { setArmed(case.id) },
             )
         },

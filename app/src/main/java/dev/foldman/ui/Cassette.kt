@@ -1,5 +1,11 @@
 package dev.foldman.ui
 
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -66,63 +72,87 @@ fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, 
     val measurer = rememberTextMeasurer()
     val shell by androidx.compose.animation.animateColorAsState(DeckColors.shell(ui.source), tween(600), label = "shell")
     val look = LocalSkin.current.look
-    Canvas(
+    Box(
         modifier
             .quarterTurn(vertical)
             .aspectRatio(TAPE_WINDOW_ASPECT)
-            .graphicsLayer(),
+            .onGloballyPositioned { anim.windowBounds = it.boundsInRoot() },
     ) {
-        val u = size.width / CROP.width
-        val r = CornerRadius(look.windowCorner * u)
-        val rim = (if (look.windowRing != null) 2f else 1.1f) * u
-        // Recess and chrome rim.
-        drawRoundRect(Color.Black.copy(alpha = 0.45f), topLeft = Offset(0f, rim * 0.6f), cornerRadius = r)
-        drawRoundRect(
-            Brush.verticalGradient(look.windowRim),
-            cornerRadius = r,
-        )
-        look.windowRing?.let { ring ->
-            // The gasket: a coloured line let into the surround.
-            val inset = rim * 0.5f
-            drawRoundRect(
-                ring, topLeft = Offset(inset, inset), size = Size(size.width - inset * 2f, size.height - inset * 2f),
-                cornerRadius = CornerRadius(r.x - inset), style = Stroke(rim * 0.26f),
-            )
-        }
-        val inner = RoundRect(rim, rim, size.width - rim, size.height - rim, CornerRadius(r.x - rim))
-        val innerPath = Path().apply { addRoundRect(inner) }
-        drawPath(innerPath, Color(0xFF0C0C0D))
-        val slide = anim.insert.value
-        val pop = anim.pop.value
-        clipPath(innerPath) {
-            // In and out through the top of the case (the left of the canvas when stood on end).
-            val dx = if (vertical) slide * size.width * 1.1f + pop * u * 5f else 0f
-            val dy = if (vertical) 0f else -slide * size.height * 1.3f - pop * u * 5f
-            translate(dx, dy) {
-                withTransform({
-                    translate(-CROP.left * u, -CROP.top * u)
-                    scale(u, u, Offset.Zero)
-                }) {
-                    drawCassette(ui, anim.reels, shell, measurer, u)
+        // The bay, and the cassette riding in and out of it.
+        Canvas(Modifier.fillMaxSize().graphicsLayer()) {
+            val u = size.width / CROP.width
+            val r = CornerRadius(look.windowCorner * u)
+            val rim = (if (look.windowRing != null) 2f else 1.1f) * u
+            drawRoundRect(Color.Black.copy(alpha = 0.45f), topLeft = Offset(0f, rim * 0.6f), cornerRadius = r)
+            drawRoundRect(Color(0xFF0C0C0D), cornerRadius = r)
+            val inner = RoundRect(rim, rim, size.width - rim, size.height - rim, CornerRadius(r.x - rim))
+            val innerPath = Path().apply { addRoundRect(inner) }
+            val slide = anim.insert.value
+            val pop = anim.pop.value
+            clipPath(innerPath) {
+                // In and out through the top of the case (the left of the canvas when stood on end).
+                val dx = if (vertical) slide * size.width * 1.1f + pop * u * 5f else 0f
+                val dy = if (vertical) 0f else -slide * size.height * 1.3f - pop * u * 5f
+                translate(dx, dy) {
+                    withTransform({
+                        translate(-CROP.left * u, -CROP.top * u)
+                        scale(u, u, Offset.Zero)
+                    }) {
+                        drawCassette(ui, anim.reels, shell, measurer, u)
+                    }
                 }
             }
-            // Smoked glass: tint, a long diagonal reflection and a soft top glare.
-            drawRect(Color(0xFF26303C).copy(alpha = 0.22f))
-            drawPath(
-                Path().apply {
-                    moveTo(size.width * 0.52f, 0f); lineTo(size.width * 0.70f, 0f)
-                    lineTo(size.width * 0.46f, size.height); lineTo(size.width * 0.28f, size.height); close()
-                },
-                Brush.horizontalGradient(
-                    listOf(Color.Transparent, Color.White.copy(alpha = 0.13f), Color.White.copy(alpha = 0.04f), Color.Transparent),
-                    size.width * 0.28f, size.width * 0.70f,
-                ),
-            )
-            drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.12f), Color.Transparent), 0f, size.height * 0.3f))
-            // Inner shadow where the case overhangs the glass.
-            drawPath(innerPath, Color.Black.copy(alpha = 0.6f), style = Stroke(rim * 1.4f))
         }
-        drawPath(innerPath, Color.White.copy(alpha = 0.35f), style = Stroke(0.6f))
+        // The lid: the surround and its smoked glass, hinged along the foot of the cassette so it
+        // swings out toward you to take a tape.
+        Canvas(
+            Modifier.fillMaxSize().graphicsLayer {
+                val open = anim.door.value
+                if (vertical) {
+                    transformOrigin = TransformOrigin(1f, 0.5f)
+                    rotationY = open * 58f
+                } else {
+                    transformOrigin = TransformOrigin(0.5f, 1f)
+                    rotationX = -open * 58f
+                }
+                cameraDistance = 14f * density
+            },
+        ) {
+            val u = size.width / CROP.width
+            val r = CornerRadius(look.windowCorner * u)
+            val rim = (if (look.windowRing != null) 2f else 1.1f) * u
+            val inner = RoundRect(rim, rim, size.width - rim, size.height - rim, CornerRadius(r.x - rim))
+            val innerPath = Path().apply { addRoundRect(inner) }
+            clipPath(innerPath, clipOp = ClipOp.Difference) {
+                drawRoundRect(Brush.verticalGradient(look.windowRim), cornerRadius = r)
+                look.windowRing?.let { ring ->
+                    // The gasket: a coloured line let into the surround.
+                    val inset = rim * 0.5f
+                    drawRoundRect(
+                        ring, topLeft = Offset(inset, inset), size = Size(size.width - inset * 2f, size.height - inset * 2f),
+                        cornerRadius = CornerRadius(r.x - inset), style = Stroke(rim * 0.26f),
+                    )
+                }
+            }
+            clipPath(innerPath) {
+                // Smoked glass: tint, a long diagonal reflection and a soft top glare.
+                drawRect(Color(0xFF26303C).copy(alpha = 0.22f))
+                drawPath(
+                    Path().apply {
+                        moveTo(size.width * 0.52f, 0f); lineTo(size.width * 0.70f, 0f)
+                        lineTo(size.width * 0.46f, size.height); lineTo(size.width * 0.28f, size.height); close()
+                    },
+                    Brush.horizontalGradient(
+                        listOf(Color.Transparent, Color.White.copy(alpha = 0.13f), Color.White.copy(alpha = 0.04f), Color.Transparent),
+                        size.width * 0.28f, size.width * 0.70f,
+                    ),
+                )
+                drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.12f), Color.Transparent), 0f, size.height * 0.3f))
+                // Inner shadow where the case overhangs the glass.
+                drawPath(innerPath, Color.Black.copy(alpha = 0.6f), style = Stroke(rim * 1.4f))
+            }
+            drawPath(innerPath, Color.White.copy(alpha = 0.35f), style = Stroke(0.6f))
+        }
     }
 }
 
