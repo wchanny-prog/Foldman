@@ -1,5 +1,8 @@
 package dev.foldman.ui
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.foundation.layout.offset
 import dev.foldman.deck.LabelPalette
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.graphics.drawscope.translate
@@ -556,27 +559,30 @@ private fun FlyingTape(flight: TapeFlight, t: Float, to: Rect?, ui: DeckUi, reel
         )
     }
     val shell = DeckColors.shell(case.source)
-    Canvas(Modifier.fillMaxSize()) {
-        val from = flight.from
-        val ease = t * t * (3f - 2f * t)
-        // It leaves the slot no taller than the spine and ends the size of the tape in the window,
-        // whose glass shows 84 of the cassette's 100 mm.
-        val startLong = from.height * 0.95f * (100f / 64f)
-        val endLong = to.height * (100f / 84f)
-        val long = startLong + (endLong - startLong) * ease
-        val short = long * 0.64f
-        val lift = kotlin.math.sin(t * Math.PI).toFloat() * 40.dp.toPx()
-        val cx = from.center.x + (to.center.x - from.center.x) * ease
-        val cy = from.center.y + (to.center.y - to.height * 0.5f - from.center.y) * ease - lift
-        // Fades in as it clears the slot, and out as the drop into the bay takes over.
-        val alpha = (t / 0.12f).coerceAtMost(1f) * ((1f - t) / 0.14f).coerceIn(0f, 1f)
-        drawContext.canvas.saveLayer(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height), Paint().apply { this.alpha = alpha })
-        // Stood on end the same way round as the tape in the player.
-        rotate(-90f * ease, Offset(cx, cy)) {
-            translate(cx - long / 2f, cy - short / 2f) {
-                drawLooseCassette(tape, reels, shell, measurer, long)
-            }
-        }
-        drawContext.canvas.restore()
+    val from = flight.from
+    val ease = t * t * (3f - 2f * t)
+    // It leaves the slot no taller than the spine and ends the size of the tape in the window,
+    // whose glass shows 84 of the cassette's 100 mm.
+    val startLong = from.height * 0.95f * (100f / 64f)
+    val endLong = to.height * (100f / 84f)
+    val long = startLong + (endLong - startLong) * ease
+    val short = long * 0.64f
+    val density = LocalDensity.current
+    val lift = kotlin.math.sin(t * Math.PI).toFloat() * with(density) { 40.dp.toPx() }
+    val cx = from.center.x + (to.center.x - from.center.x) * ease
+    val cy = from.center.y + (to.center.y - to.height * 0.5f - from.center.y) * ease - lift
+    // A layer no bigger than the cassette itself: moved, turned and faded by the compositor.
+    Canvas(
+        Modifier
+            .offset { IntOffset((cx - long / 2f).toInt(), (cy - short / 2f).toInt()) }
+            .size(with(density) { long.toDp() }, with(density) { short.toDp() })
+            .graphicsLayer {
+                // Stood on end the same way round as the tape in the player.
+                rotationZ = -90f * ease
+                // Fades in as it clears the slot, and out as the drop into the bay takes over.
+                alpha = (t / 0.12f).coerceAtMost(1f) * ((1f - t) / 0.14f).coerceIn(0f, 1f)
+            },
+    ) {
+        drawLooseCassette(tape, reels, shell, measurer, size.width)
     }
 }
