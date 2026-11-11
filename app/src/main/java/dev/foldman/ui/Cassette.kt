@@ -264,7 +264,6 @@ private fun DrawScope.drawLabel(ui: DeckUi, palette: LabelPalette, measurer: Tex
     val strip = RoundRect(10f, 13.4f, 90f, 19.4f, CornerRadius(0.9f))
     drawPath(Path().apply { addRoundRect(strip) }, palette.paper.copy(alpha = if (art != null) 0.94f else 1f))
     drawLine(DeckColors.PaperLine.copy(alpha = 0.7f), Offset(17.5f, 18.4f), Offset(89f, 18.4f), 0.12f)
-    drawCircle(palette.ink, 2.4f, Offset(13.6f, 16.4f), style = Stroke(0.3f))
     val ink = palette.ink
     // Text is laid out in pixels and scaled down into millimetre space with the rest.
     fun text(s: String, x: Float, y: Float, sizeMm: Float, maxWidthMm: Float, style: TextStyle) {
@@ -278,10 +277,6 @@ private fun DrawScope.drawLabel(ui: DeckUi, palette: LabelPalette, measurer: Tex
     }
     val hand = TextStyle(fontFamily = LabelFont, color = ink)
     val print = TextStyle(fontFamily = FontFamily.SansSerif, color = ink, fontWeight = FontWeight.Bold, letterSpacing = (0.3f * u).toSp())
-    text("A", 12.75f, 14.4f, 3.6f, 5f, print)
-    val title = ui.title.ifBlank { placeholderTitle(ui) }
-    val line = listOf(title, ui.artist).filter { it.isNotBlank() }.joinToString("  —  ")
-    text(line.uppercase(), 17.5f, 13.6f, 3.4f, 71f, hand)
 
 }
 

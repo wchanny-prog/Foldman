@@ -189,17 +189,19 @@ fun FoldmanScreen(
                 activity?.requestedOrientation =
                     if (coverScreen) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
-            LaunchedEffect(posture) { view.showSystemBars(posture != Posture.Cover) }
+            LaunchedEffect(posture) { view.showSystemBars(posture == Posture.Tabletop) }
             when (posture) {
                 // The cover screen is the player itself: edge to edge, system bars hidden.
                 Posture.Cover -> CoverWalkman(ui, anim, deck, onTapes = { shelfOpen = true }, modifier = Modifier.fillMaxSize())
-                Posture.Unfolded -> Column(
-                    Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    LibraryBand(ui, shelfActions, vm::playQueueItem, Modifier.fillMaxWidth().weight(if (landscape) 0.31f else 0.27f))
-                    DeckBand(ui, anim, deck, vm, Modifier.fillMaxWidth().weight(if (landscape) 0.44f else 0.46f))
-                    NowPlayingBand(ui, vm::playQueueItem, Modifier.fillMaxWidth().weight(if (landscape) 0.25f else 0.27f))
+                // Opened flat: the rack of tapes on the left page, the same upright player as the
+                // cover screen on the right, split at the hinge.
+                Posture.Unfolded -> Row(Modifier.fillMaxSize()) {
+                    TapeShelf(
+                        ui, shelfActions,
+                        Modifier.weight(1f).fillMaxHeight().windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Start)),
+                        rack = true,
+                    )
+                    CoverWalkman(ui, anim, deck, onTapes = null, modifier = Modifier.weight(1f).fillMaxHeight())
                 }
                 Posture.Tabletop -> {
                     val (topH, gap) = with(density) {
@@ -290,7 +292,7 @@ private val OnEnamel: TextStyle
 
 /** The folded phone: an upright portable player. */
 @Composable
-private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, onTapes: () -> Unit, modifier: Modifier) {
+private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, onTapes: (() -> Unit)?, modifier: Modifier) {
     BoxWithConstraints(modifier) {
         val capH = maxHeight * 0.085f
         val look = LocalSkin.current.look
@@ -305,19 +307,22 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
             ) {
                 // Inset from the corner so the display's rounded corner doesn't clip it.
                 Row(Modifier.fillMaxWidth().height(capH).padding(start = 8.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    HotlineButton(onTapes, Modifier.size(44.dp, 22.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
+                    // Folded, this opens the tape shelf. Opened flat the shelf is already beside the player.
+                    if (onTapes != null) {
+                        HotlineButton(onTapes, Modifier.size(44.dp, 22.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
+                    }
                 }
                 Spacer(Modifier.height(12.dp))
-                BrandMark(22.sp)
+                BrandMark(30.sp)
                 Spacer(Modifier.height(10.dp))
                 // The window takes everything the lettering leaves: this is a cassette player first.
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     TapeWindow(ui, anim, vertical = true)
                 }
                 Spacer(Modifier.height(10.dp))
-                ModelMark(26.sp)
+                ModelMark(38.sp)
                 Spacer(Modifier.height(2.dp))
                 Text(
                     look.tag?.let { "$it · STEREO CASSETTE PLAYER" } ?: "STEREO CASSETTE PLAYER",
@@ -385,7 +390,7 @@ private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
         VolumeSlider(ui.volume, deck.volume, Modifier.fillMaxWidth().weight(1f))
         Text("VOLUME", style = EngravedCaps.copy(fontSize = 7.sp))
         Spacer(Modifier.height(10.dp))
-        PhonesJack(Modifier.size(18.dp))
+        PhonesJack(Modifier.size(PhonesJackSize))
         Text("PHONES", style = EngravedCaps.copy(fontSize = 6.sp))
     }
 }
@@ -397,13 +402,13 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
     Row(modifier.paintedBody(Enamel, corner = 22.dp, brushed = look.brushed)) {
         Column(Modifier.weight(0.74f).fillMaxHeight().padding(horizontal = 20.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
-                BrandMark(18.sp)
+                BrandMark(22.sp)
                 Text(
                     "WB-F8 · STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 8.sp),
                     maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
                 )
-                ModelMark(20.sp)
+                ModelMark(26.sp)
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -454,7 +459,7 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
                 Spacer(Modifier.height(8.dp))
                 MiniButton("SKIN", vm::cycleSkin, diameter = 20.dp)
                 Spacer(Modifier.weight(1f))
-                PhonesJack(Modifier.size(18.dp))
+                PhonesJack(Modifier.size(PhonesJackSize))
                 Text("PHONES", style = EngravedCaps.copy(fontSize = 6.sp))
             }
             Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {

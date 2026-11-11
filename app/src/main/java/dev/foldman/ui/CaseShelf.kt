@@ -84,8 +84,11 @@ fun CaseShelf(
     modifier: Modifier = Modifier,
     caseWidth: Dp = 84.dp,
     showHeader: Boolean = true,
+    /** Open on the spines, as a rack of tapes, and draw them this tall. */
+    startOnSpines: Boolean = false,
+    spineHeight: Dp = 34.dp,
 ) {
-    var spines by rememberSaveable { mutableStateOf(false) }
+    var spines by rememberSaveable { mutableStateOf(startOnSpines) }
     var armed by remember { mutableStateOf<String?>(null) }
     Column(modifier) {
         if (showHeader) {
@@ -102,10 +105,19 @@ fun CaseShelf(
         }
         when {
             cases.isEmpty() -> EmptyShelf()
-            spines -> LazyColumn(verticalArrangement = Arrangement.spacedBy(3.dp), contentPadding = PaddingValues(end = 10.dp)) {
+            // The rack: a wooden holder with a slot for each tape, spine out.
+            spines -> LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Brush.horizontalGradient(listOf(Color(0xFF3A2616), Color(0xFF5A3D24), Color(0xFF3A2616))))
+                    .padding(horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp, end = 12.dp),
+            ) {
                 items(cases, key = { it.id }) { case ->
                     CaseSlot(case, armed == case.id, { armed = it }, actions) {
-                        CaseSpine(case, inDeck = case.id == inDeckId)
+                        CaseSpine(case, inDeck = case.id == inDeckId, height = spineHeight)
                     }
                 }
             }
@@ -291,11 +303,11 @@ private fun CaseFront(
 
 /** The case spine-on, the way tapes sit in a rack: colour block, handwritten title, artist. */
 @Composable
-private fun CaseSpine(case: TapeCase, inDeck: Boolean) {
+private fun CaseSpine(case: TapeCase, inDeck: Boolean, height: Dp = 34.dp) {
     Row(
         Modifier
             .fillMaxWidth()
-            .height(34.dp)
+            .height(height)
             .offset(x = if (inDeck) 10.dp else 0.dp)
             .shadow(if (inDeck) 8.dp else 2.dp, RoundedCornerShape(2.dp))
             .clip(RoundedCornerShape(2.dp))

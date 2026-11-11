@@ -45,6 +45,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
@@ -136,10 +137,9 @@ fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp,
     }
 }
 
-/** The maker's name: the wide, squared lettering of 1980s hi-fi. */
-val BrandFont = FontFamily(Font(R.font.michroma))
-/** The model name: a heavy extended sans. */
-val ModelFont = FontFamily(Font(R.font.krona_one))
+/** The maker's and model names: a squared, slanted technical face. */
+val BrandFont = FontFamily(Font(R.font.chakra_petch_bold_italic, FontWeight.Bold, FontStyle.Italic))
+val ModelFont = BrandFont
 /** Tape labels and J-cards: a squared technical face in place of handwriting. */
 val LabelFont = FontFamily(Font(R.font.chakra_petch_semibold))
 /** Small print on labels. */
@@ -154,8 +154,9 @@ fun BrandMark(size: TextUnit, modifier: Modifier = Modifier) {
         style = TextStyle(
             fontFamily = BrandFont,
             fontWeight = FontWeight.Bold,
+            fontStyle = FontStyle.Italic,
             fontSize = size,
-            letterSpacing = size * 0.18f,
+            letterSpacing = size * 0.12f,
             brush = look.markBrush,
             shadow = look.markShadow,
         ),
@@ -171,6 +172,8 @@ fun ModelMark(size: TextUnit, modifier: Modifier = Modifier) {
         modifier,
         style = TextStyle(
             fontFamily = ModelFont,
+            fontWeight = FontWeight.Bold,
+            fontStyle = FontStyle.Italic,
             fontSize = size,
             letterSpacing = size * 0.04f,
             brush = look.markBrush,
@@ -396,8 +399,22 @@ fun MicGrille(modifier: Modifier = Modifier) {
 fun PhonesJack(modifier: Modifier = Modifier) {
     Canvas(modifier) {
         val r = size.minDimension / 2f
-        drawCircle(Brush.radialGradient(listOf(Color(0xFFE6E8EB), Color(0xFF8E9196)), center, r), r)
-        drawCircle(Color(0xFF050505), r * 0.62f)
-        drawCircle(Color(0xFF2A2B2E), r * 0.3f)
+        // The collar: a turned metal ring with a bright lip.
+        drawCircle(Color.Black.copy(alpha = 0.35f), r, center + Offset(0f, r * 0.08f))
+        drawCircle(Brush.linearGradient(listOf(Color(0xFFF4F5F7), Color(0xFF9A9DA2), Color(0xFFDCDEE1)), Offset(0f, 0f), Offset(size.width, size.height)), r * 0.96f)
+        drawCircle(Color.Black.copy(alpha = 0.35f), r * 0.74f, style = Stroke(r * 0.05f))
+        // The socket itself, with the contact sleeve catching light inside.
+        drawCircle(Color(0xFF050505), r * HOLE_FRACTION)
+        drawCircle(Color(0xFF8A7A4A).copy(alpha = 0.55f), r * HOLE_FRACTION * 0.82f, style = Stroke(r * 0.05f))
+        drawCircle(Color(0xFF1D1E20), r * HOLE_FRACTION * 0.45f)
     }
 }
+
+/** The hole's share of the jack's diameter. */
+private const val HOLE_FRACTION = 0.58f
+
+/**
+ * Diameter for [PhonesJack] that draws its hole at a true 3.5 mm. A dp is 1/160 inch, so 3.5 mm
+ * is about 22 dp, and the collar around it brings the whole jack to about 38 dp.
+ */
+val PhonesJackSize: Dp = (3.5f / 25.4f * 160f / HOLE_FRACTION).dp

@@ -69,7 +69,7 @@ class ShelfActions(
  * in, with its cover and track list.
  */
 @Composable
-fun TapeShelf(ui: DeckUi, actions: ShelfActions, modifier: Modifier = Modifier) {
+fun TapeShelf(ui: DeckUi, actions: ShelfActions, modifier: Modifier = Modifier, rack: Boolean = false) {
     // Opens on the cases once there are some; until then, on the sources so a first tape can be loaded.
     var showCases by rememberSaveable { mutableStateOf(ui.cases.isNotEmpty()) }
     Column(
@@ -87,7 +87,10 @@ fun TapeShelf(ui: DeckUi, actions: ShelfActions, modifier: Modifier = Modifier) 
         }
         Spacer(Modifier.height(12.dp))
         if (showCases) {
-            CaseShelf(ui.cases, ui.inDeckCaseId, actions.cases, Modifier.weight(1f).fillMaxWidth(), showHeader = true)
+            CaseShelf(
+                ui.cases, ui.inDeckCaseId, actions.cases, Modifier.weight(1f).fillMaxWidth(), showHeader = true,
+                startOnSpines = rack, spineHeight = if (rack) 46.dp else 34.dp,
+            )
         } else {
             Source.entries.forEach { s ->
                 TapeSpine(s, inDeck = s == ui.source, onClick = { actions.selectSource(s) })

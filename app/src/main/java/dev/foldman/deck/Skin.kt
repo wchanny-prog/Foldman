@@ -2,7 +2,7 @@ package dev.foldman.deck
 
 /** The case the player wears. Chosen on the tape shelf and remembered. */
 enum class Skin(val label: String) {
-    GUNMETAL("GUNMETAL"),
+    GUNMETAL("METAL"),
     SPORT("SPORT"),
     ;
 

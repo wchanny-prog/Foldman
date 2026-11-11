@@ -19,5 +19,5 @@ Third-party software bundled in release builds:
   Apple Developer Program License Agreement. It is not part of this repository's source and is
   not covered by the Apache License.
 - AndroidX, Jetpack Compose and Media3, (c) The Android Open Source Project, Apache License 2.0.
-- Michroma, Krona One, Chakra Petch and Share Tech Mono, used for the lettering on the case and
+- Chakra Petch and Share Tech Mono, used for the lettering on the case and
   the tape labels, under the SIL Open Font License 1.1 (see licenses/ for each font's copyright).
