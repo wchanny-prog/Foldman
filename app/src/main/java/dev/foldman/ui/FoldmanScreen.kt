@@ -397,11 +397,13 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
     Row(modifier.paintedBody(Enamel, corner = 22.dp, brushed = look.brushed)) {
         Column(Modifier.weight(0.74f).fillMaxHeight().padding(horizontal = 20.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
-                BrandMark(22.sp)
-                Spacer(Modifier.weight(1f))
-                Text("WB-F8 · STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 8.sp))
-                Spacer(Modifier.width(16.dp))
-                ModelMark(26.sp)
+                BrandMark(18.sp)
+                Text(
+                    "WB-F8 · STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 8.sp),
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
+                )
+                ModelMark(20.sp)
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

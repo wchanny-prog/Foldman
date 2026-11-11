@@ -74,7 +74,7 @@ fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, 
     ) {
         val u = size.width / CROP.width
         val r = CornerRadius(look.windowCorner * u)
-        val rim = (if (look.windowRing != null) 2.6f else 1.1f) * u
+        val rim = (if (look.windowRing != null) 2f else 1.1f) * u
         // Recess and chrome rim.
         drawRoundRect(Color.Black.copy(alpha = 0.45f), topLeft = Offset(0f, rim * 0.6f), cornerRadius = r)
         drawRoundRect(

@@ -63,7 +63,7 @@ private val Sport = SkinLook(
     markShadow = Shadow(Color.White.copy(alpha = 0.4f), Offset(0f, 1.5f), 0f),
     windowRim = listOf(Color(0xFF34363A), Color(0xFF1A1B1D), Color(0xFF2A2C2F)),
     windowRing = Color(0xFF2B6FD6),
-    windowCorner = 11f,
+    windowCorner = 8f,
     tag = "SPORT",
     tagColor = Color(0xFF2B6FD6),
 )
