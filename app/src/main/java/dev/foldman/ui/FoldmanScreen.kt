@@ -419,12 +419,13 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
                 ) {
                     // A stamped mark rather than a button: it belongs to the print on the case.
                     Row(
-                        Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onTapes).padding(horizontal = 6.dp, vertical = 6.dp),
+                        Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable(onClickLabel = "Open the tape shelf", onClick = onTapes)
+                            .padding(horizontal = 6.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         TapeStamp(OnEnamel.color.copy(alpha = 0.9f), Modifier.size(34.dp, 22.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
                     }
                 }
             } else {
