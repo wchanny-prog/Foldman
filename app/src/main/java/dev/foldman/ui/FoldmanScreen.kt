@@ -322,7 +322,7 @@ fun FoldmanScreen(
                     )
                 }
             }
-            flight?.let { f -> FlyingTape(f, flightT.value, anim.windowBounds, ui, anim.reels) }
+            flight?.let { f -> FlyingTape(f, { flightT.value }, anim.windowBounds, ui, anim.reels) }
         }
     }
 }
@@ -546,7 +546,7 @@ private class TapeFlight(val case: TapeCase, val from: Rect, val cover: ImageBit
  * above the open lid ready to drop in.
  */
 @Composable
-private fun FlyingTape(flight: TapeFlight, t: Float, to: Rect?, ui: DeckUi, reels: ReelMotion) {
+private fun FlyingTape(flight: TapeFlight, t: () -> Float, to: Rect?, ui: DeckUi, reels: ReelMotion) {
     if (to == null) return
     val measurer = rememberTextMeasurer()
     val case = flight.case
@@ -560,27 +560,33 @@ private fun FlyingTape(flight: TapeFlight, t: Float, to: Rect?, ui: DeckUi, reel
     }
     val shell = DeckColors.shell(case.source)
     val from = flight.from
-    val ease = t * t * (3f - 2f * t)
-    // It leaves the slot no taller than the spine and ends the size of the tape in the window,
-    // whose glass shows 84 of the cassette's 100 mm.
-    val startLong = from.height * 0.95f * (100f / 64f)
-    val endLong = to.height * (100f / 84f)
-    val long = startLong + (endLong - startLong) * ease
-    val short = long * 0.64f
     val density = LocalDensity.current
-    val lift = kotlin.math.sin(t * Math.PI).toFloat() * with(density) { 40.dp.toPx() }
-    val cx = from.center.x + (to.center.x - from.center.x) * ease
-    val cy = from.center.y + (to.center.y - to.height * 0.5f - from.center.y) * ease - lift
-    // A layer no bigger than the cassette itself: moved, turned and faded by the compositor.
+    // It arrives a little wider than the window it drops into, and leaves the slot no taller
+    // than the spine it came from.
+    val short = to.width * 1.15f
+    val long = short / 0.64f
+    val startScale = (from.height * 0.95f / short).coerceAtMost(1f)
+    val lift = with(density) { 40.dp.toPx() }
+    // Drawn once at its final size. Everything that changes in flight (place, size, turn, fade)
+    // is a property of the layer, so no frame of the trip redraws or re-lays-out the cassette.
     Canvas(
         Modifier
-            .offset { IntOffset((cx - long / 2f).toInt(), (cy - short / 2f).toInt()) }
             .size(with(density) { long.toDp() }, with(density) { short.toDp() })
             .graphicsLayer {
+                val p = t()
+                val ease = p * p * (3f - 2f * p)
+                val cx = from.center.x + (to.center.x - from.center.x) * ease
+                val cy = from.center.y + (to.center.y - to.height * 0.5f - from.center.y) * ease -
+                    kotlin.math.sin(p * Math.PI).toFloat() * lift
+                translationX = cx - long / 2f
+                translationY = cy - short / 2f
+                val scale = startScale + (1f - startScale) * ease
+                scaleX = scale
+                scaleY = scale
                 // Stood on end the same way round as the tape in the player.
                 rotationZ = -90f * ease
                 // Fades in as it clears the slot, and out as the drop into the bay takes over.
-                alpha = (t / 0.12f).coerceAtMost(1f) * ((1f - t) / 0.14f).coerceIn(0f, 1f)
+                alpha = (p / 0.12f).coerceAtMost(1f) * ((1f - p) / 0.14f).coerceIn(0f, 1f)
             },
     ) {
         drawLooseCassette(tape, reels, shell, measurer, size.width)
