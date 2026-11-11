@@ -319,7 +319,7 @@ private fun DrawScope.drawRibbedKey(depth: Float, rubber: Boolean) {
 /** A function mark engraved on the strip beside its key. */
 @Composable
 fun KeyMark(symbol: KeySymbol, modifier: Modifier = Modifier, color: Color = DeckColors.Engrave) {
-    Canvas(modifier) { drawSymbol(symbol, Offset(size.width / 2f, size.height / 2f), minOf(size.width * 0.24f, size.height * 0.3f), color) }
+    Canvas(modifier) { drawSymbol(symbol, Offset(size.width / 2f, size.height / 2f), minOf(size.width, size.height) * 0.42f, color) }
 }
 
 /** A small round push button (AMS skip, counter reset, tape shelf). */

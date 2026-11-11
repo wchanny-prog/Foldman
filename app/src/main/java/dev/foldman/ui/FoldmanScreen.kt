@@ -1,5 +1,6 @@
 package dev.foldman.ui
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
@@ -368,10 +369,10 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
         Row(Modifier.fillMaxSize().paintedBody(Enamel, capHeight = capH, corner = 0.dp, framed = false, brushed = look.brushed)) {
             Column(
                 Modifier
-                    .weight(0.7f)
+                    .weight(0.83f)
                     .fillMaxHeight()
                     .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Start))
-                    .padding(start = 14.dp, end = 10.dp),
+                    .padding(start = 12.dp, end = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Inset from the corner so the display's rounded corner doesn't clip it.
@@ -418,15 +419,15 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
                 }
                 Spacer(Modifier.height(10.dp))
             }
-            SideStrip(ui, deck, Modifier.weight(0.3f).fillMaxHeight())
+            SideStrip(ui, deck, Modifier.weight(0.17f).fillMaxHeight())
         }
     }
 }
 
 /**
- * The silver strip down the side of the case, laid out the way such players arranged them: the
- * mic at the top, a long stop bar beside a column of ribbed keys with their marks engraved
- * between, then the twin volume sliders and the jack at the foot.
+ * The control strip down the side of the case, kept slim so the door takes most of the front:
+ * every control sits in one line, from the mic at the top, through the keys with their marks
+ * engraved above them, to the volume sliders and the jack at the foot.
  */
 @Composable
 private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
@@ -436,50 +437,51 @@ private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
         modifier
             .stripFinish(LocalSkin.current.look, 0.dp)
             .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.End))
-            .padding(start = 9.dp, end = 11.dp, top = 26.dp, bottom = 22.dp),
+            .padding(start = 7.dp, end = 9.dp, top = 24.dp, bottom = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                MicGrille(Modifier.size(36.dp, 30.dp))
-                Text("MIC", style = EngravedCaps.copy(fontSize = 6.sp))
+        MicGrille(Modifier.size(30.dp, 22.dp))
+        Text("MIC", style = EngravedCaps.copy(fontSize = 6.sp))
+        Spacer(Modifier.height(8.dp))
+        StatusLed(ui.transport)
+        Spacer(Modifier.height(10.dp))
+        Column(Modifier.fillMaxWidth().weight(1.15f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            StripKeySlot(KeySymbol.STOP, Color(0xFFB92F26), 1f) {
+                StripKey("Stop, eject", latched = false, onPress = deck.stop, modifier = it)
             }
-            Spacer(Modifier.weight(1f))
-            StatusLed(ui.transport)
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth().weight(0.9f)) {
-            // The long bar: stop, and eject when the tape is already stopped.
-            Column(Modifier.weight(0.3f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
-                StripKey("Stop, eject", latched = false, onPress = deck.stop, modifier = Modifier.fillMaxWidth().weight(1f))
-                Spacer(Modifier.height(5.dp))
-                Text("STOP\nEJECT", style = EngravedCaps.copy(fontSize = 6.sp, letterSpacing = 0.5.sp, lineHeight = 8.sp), textAlign = TextAlign.Center)
+            StripKeySlot(KeySymbol.FF, DeckColors.Engrave, 1f) {
+                StripKey("Fast forward", latched = t == Transport.FAST_FORWARDING, onPress = deck.fastForward, modifier = it)
             }
-            // Marks for the keys beside them.
-            Column(Modifier.weight(0.2f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                KeyMark(KeySymbol.FF, Modifier.fillMaxWidth().weight(1f))
-                KeyMark(KeySymbol.REW, Modifier.fillMaxWidth().weight(1f))
-                KeyMark(KeySymbol.PAUSE, Modifier.fillMaxWidth().weight(1f), color = Color(0xFF2F7D49))
-                KeyMark(KeySymbol.PLAY, Modifier.fillMaxWidth().weight(2.2f), color = DeckColors.AccentDeep)
+            StripKeySlot(KeySymbol.REW, DeckColors.Engrave, 1f) {
+                StripKey("Rewind", latched = t == Transport.REWINDING, onPress = deck.rewind, modifier = it)
             }
-            Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                StripKey("Fast forward", latched = t == Transport.FAST_FORWARDING, onPress = deck.fastForward, modifier = Modifier.fillMaxWidth().weight(1f))
-                StripKey("Rewind", latched = t == Transport.REWINDING, onPress = deck.rewind, modifier = Modifier.fillMaxWidth().weight(1f))
-                StripKey("Pause", latched = t == Transport.PAUSED, onPress = deck.pause, modifier = Modifier.fillMaxWidth().weight(1f))
-                StripKey("Play", latched = t == Transport.PLAYING || t == Transport.PAUSED, onPress = deck.play, modifier = Modifier.fillMaxWidth().weight(2.2f))
+            StripKeySlot(KeySymbol.PAUSE, Color(0xFF2F7D49), 1f) {
+                StripKey("Pause", latched = t == Transport.PAUSED, onPress = deck.pause, modifier = it)
             }
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-            MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 26.dp)
-            MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 26.dp, enabled = ui.hasNext)
+            StripKeySlot(KeySymbol.PLAY, DeckColors.AccentDeep, 1.7f) {
+                StripKey("Play", latched = t == Transport.PLAYING || t == Transport.PAUSED, onPress = deck.play, modifier = it)
+            }
         }
         Spacer(Modifier.height(10.dp))
+        MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 24.dp)
+        Spacer(Modifier.height(4.dp))
+        MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 24.dp, enabled = ui.hasNext)
+        Spacer(Modifier.height(8.dp))
         VolumeSlider(ui.volume, deck.volume, Modifier.fillMaxWidth().weight(1f))
-        Text("VOLUME", style = EngravedCaps.copy(fontSize = 7.sp))
-        Spacer(Modifier.height(10.dp))
+        Text("VOLUME", style = EngravedCaps.copy(fontSize = 6.sp, letterSpacing = 1.sp))
+        Spacer(Modifier.height(8.dp))
         PhonesJack(Modifier.size(PhonesJackSize))
-        Text("PHONES", style = EngravedCaps.copy(fontSize = 6.sp))
+        Text("PHONES", style = EngravedCaps.copy(fontSize = 6.sp, letterSpacing = 1.sp))
+    }
+}
+
+/** One key in the strip's single line, with its mark engraved just above it. */
+@Composable
+private fun ColumnScope.StripKeySlot(symbol: KeySymbol, color: Color, weight: Float, key: @Composable (Modifier) -> Unit) {
+    Column(Modifier.fillMaxWidth().weight(weight), horizontalAlignment = Alignment.CenterHorizontally) {
+        KeyMark(symbol, Modifier.size(18.dp, 10.dp), color)
+        Spacer(Modifier.height(2.dp))
+        key(Modifier.fillMaxWidth().weight(1f))
     }
 }
 
