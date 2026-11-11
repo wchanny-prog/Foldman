@@ -1,5 +1,8 @@
 package dev.foldman.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.zIndex
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.ui.graphics.TransformOrigin
@@ -411,12 +414,18 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
                     Modifier
                         .fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start))
-                        .padding(start = 22.dp, top = 9.dp, bottom = 14.dp),
+                        .padding(start = 16.dp, top = 4.dp, bottom = 9.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    HotlineButton(onTapes, Modifier.size(44.dp, 22.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
+                    // A stamped mark rather than a button: it belongs to the print on the case.
+                    Row(
+                        Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onTapes).padding(horizontal = 6.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TapeStamp(OnEnamel.color.copy(alpha = 0.9f), Modifier.size(34.dp, 22.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
+                    }
                 }
             } else {
                 Spacer(Modifier.height(10.dp))

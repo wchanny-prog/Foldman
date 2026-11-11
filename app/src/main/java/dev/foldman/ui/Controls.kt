@@ -1,5 +1,6 @@
 package dev.foldman.ui
 
+import androidx.compose.ui.graphics.StrokeJoin
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -418,3 +419,34 @@ private const val HOLE_FRACTION = 0.58f
  * is about 22 dp, and the collar around it brings the whole jack to about 38 dp.
  */
 val PhonesJackSize: Dp = (3.5f / 25.4f * 160f / HOLE_FRACTION).dp
+
+/**
+ * A cassette drawn in line, the size and weight of the approval marks stamped on a case. It is
+ * printed in the lettering colour so it reads as part of the moulding, and marks where the
+ * tapes are kept.
+ */
+@Composable
+fun TapeStamp(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val sw = (h * 0.075f).coerceAtLeast(1.5f)
+        val line = Stroke(sw, join = StrokeJoin.Round, cap = StrokeCap.Round)
+        // Shell.
+        drawRoundRect(color, Offset(sw / 2f, sw / 2f), Size(w - sw, h - sw), CornerRadius(h * 0.13f), style = line)
+        // The window, with the two reels in it.
+        drawRoundRect(color, Offset(w * 0.19f, h * 0.2f), Size(w * 0.62f, h * 0.38f), CornerRadius(h * 0.19f), style = line)
+        drawCircle(color, h * 0.075f, Offset(w * 0.34f, h * 0.39f), style = line)
+        drawCircle(color, h * 0.075f, Offset(w * 0.66f, h * 0.39f), style = line)
+        // The raised bridge along the foot, and its two guide holes.
+        drawPath(
+            Path().apply {
+                moveTo(w * 0.23f, h - sw / 2f); lineTo(w * 0.3f, h * 0.74f)
+                lineTo(w * 0.7f, h * 0.74f); lineTo(w * 0.77f, h - sw / 2f)
+            },
+            color, style = line,
+        )
+        drawCircle(color, sw * 0.55f, Offset(w * 0.42f, h * 0.87f))
+        drawCircle(color, sw * 0.55f, Offset(w * 0.58f, h * 0.87f))
+    }
+}
