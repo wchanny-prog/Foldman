@@ -48,6 +48,9 @@ shot unfolded 6
 size=$(adb shell -n wm size | tail -1 | grep -o '[0-9]*x[0-9]*')
 W=${size%x*}; H=${size#*x}
 # The third spine is a local-folder tape, which opens no other app.
+# Slowed down, so the stills land inside the sequence.
+adb shell -n settings put global animator_duration_scale 4
+sleep 1
 adb shell -n input tap $((W * 24 / 100)) $((H * 295 / 1000))
 for i in 1 2 3 4 5; do adb shell -n screencap -p /sdcard/load$i.png; done
 for i in 1 2 3 4 5; do adb pull /sdcard/load$i.png "shots/load-$i.png" </dev/null; done
