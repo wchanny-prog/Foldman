@@ -48,7 +48,7 @@ import dev.foldman.deck.DeckUi
 import dev.foldman.deck.Source
 import dev.foldman.deck.SourceStatus
 
-private val Hand = TextStyle(fontFamily = FontFamily.Cursive, color = DeckColors.Ink, fontSize = 20.sp)
+private val Hand = TextStyle(fontFamily = LabelFont, color = DeckColors.Ink, fontSize = 15.sp)
 private val Typed = TextStyle(fontFamily = FontFamily.Monospace, color = DeckColors.Ink, fontSize = 12.sp)
 
 class ShelfActions(
@@ -132,7 +132,7 @@ private fun TapeSpine(source: Source, inDeck: Boolean, onClick: () -> Unit) {
                 }
                 .padding(horizontal = 10.dp, vertical = 2.dp),
         ) {
-            Text(source.label, style = Hand.copy(fontSize = 18.sp), maxLines = 1)
+            Text(source.label, style = Hand.copy(fontSize = 14.sp), maxLines = 1)
         }
         Spacer(Modifier.width(10.dp))
         Text(
@@ -155,8 +155,8 @@ private fun JCard(ui: DeckUi, actions: ShelfActions, modifier: Modifier) {
             CoverArt(ui, Modifier.size(104.dp))
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(ui.title.ifBlank { "—" }, style = Hand.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (ui.artist.isNotBlank()) Text(ui.artist, style = Hand.copy(fontSize = 18.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(ui.title.ifBlank { "—" }, style = Hand.copy(fontSize = 18.sp), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (ui.artist.isNotBlank()) Text(ui.artist, style = Hand.copy(fontSize = 14.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (ui.album.isNotBlank()) Text(ui.album, style = Typed.copy(fontSize = 11.sp, color = DeckColors.Ink.copy(alpha = 0.6f)), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
                 Text("${formatTime(ui.positionMs)} / ${formatTime(ui.durationMs)}", style = Typed.copy(fontSize = 11.sp, color = DeckColors.Ink.copy(alpha = 0.6f)))
@@ -236,7 +236,7 @@ private fun TrackList(ui: DeckUi, actions: ShelfActions) {
             ) {
                 Text("%02d".format(i + 1), style = Typed.copy(color = DeckColors.Ink.copy(alpha = 0.5f)), modifier = Modifier.width(30.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(track.title, style = Hand.copy(fontSize = 19.sp, fontWeight = if (current) FontWeight.Bold else FontWeight.Normal), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(track.title, style = Hand.copy(fontSize = 14.sp, color = if (current) DeckColors.AccentDeep else DeckColors.Ink), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val sub = listOfNotNull(track.artist, track.folder.takeIf { it != ui.folderName }).joinToString(" · ")
                     if (sub.isNotBlank()) Text(sub, style = Typed.copy(fontSize = 10.sp, color = DeckColors.Ink.copy(alpha = 0.55f)), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }

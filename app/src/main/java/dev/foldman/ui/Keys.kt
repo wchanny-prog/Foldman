@@ -236,6 +236,87 @@ fun DrawScope.drawSymbol(symbol: KeySymbol, c: Offset, s: Float, ink: Color) {
     }
 }
 
+/**
+ * A key for the side strip: a ribbed metal cap with no caption of its own. What it does is
+ * engraved on the strip beside it. Sized entirely by [modifier].
+ */
+@Composable
+fun StripKey(description: String, latched: Boolean, onPress: () -> Unit, modifier: Modifier = Modifier) {
+    var pressed by remember { mutableStateOf(false) }
+    val view = LocalView.current
+    val sounds = LocalMechSounds.current
+    val haptics = LocalHaptics.current
+    val action by rememberUpdatedState(onPress)
+    val depth by animateFloatAsState(
+        when {
+            pressed -> 1f
+            latched -> 0.72f
+            else -> 0f
+        },
+        spring(dampingRatio = 0.5f, stiffness = 2200f), label = "stripkey",
+    )
+    Canvas(
+        modifier
+            .semantics {
+                role = Role.Button
+                contentDescription = description
+                stateDescription = if (latched) "Down" else "Up"
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(onPress = {
+                    pressed = true
+                    if (haptics) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_PRESS)
+                    sounds?.keyDown()
+                    action()
+                    tryAwaitRelease()
+                    pressed = false
+                    if (haptics) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_RELEASE)
+                    sounds?.keyUp()
+                })
+            },
+    ) { drawRibbedKey(depth) }
+}
+
+private fun DrawScope.drawRibbedKey(depth: Float) {
+    val w = size.width
+    val h = size.height
+    val travel = minOf(h * 0.12f, 5.dp.toPx())
+    val frontFull = minOf(h * 0.18f, 7.dp.toPx())
+    val front = frontFull * (1f - depth * 0.85f)
+    val top = travel * depth
+    val faceH = h - travel - frontFull
+    val r = CornerRadius(minOf(w, h) * 0.08f)
+    val shade = 0.14f * depth
+    fun metal(c: Long) = lerp(Color(c), Color.Black, shade)
+    // The slot the key rides in.
+    drawRoundRect(Color.Black.copy(alpha = 0.55f), topLeft = Offset(-2f, -1f), size = Size(w + 4f, h + 2f), cornerRadius = r)
+    drawRoundRect(
+        Brush.verticalGradient(listOf(Color(0xFF7C7F85), Color(0xFF3C3F43)), top + faceH - r.y, top + faceH + front),
+        topLeft = Offset(0f, top + faceH - r.y), size = Size(w, front + r.y), cornerRadius = r,
+    )
+    drawRoundRect(
+        Brush.verticalGradient(listOf(metal(0xFFF4F5F7), metal(0xFFD0D2D6), metal(0xFFB6B9BE)), top, top + faceH),
+        topLeft = Offset(0f, top), size = Size(w, faceH), cornerRadius = r,
+    )
+    // Fine ribs milled across the cap, for grip.
+    val mx = w * 0.1f
+    val my = minOf(faceH * 0.12f, 5.dp.toPx())
+    var y = top + my
+    val pitch = 2.4.dp.toPx()
+    while (y < top + faceH - my) {
+        drawLine(Color.Black.copy(alpha = 0.26f), Offset(mx, y), Offset(w - mx, y), 1.1f)
+        drawLine(Color.White.copy(alpha = 0.7f), Offset(mx, y + 1.3f), Offset(w - mx, y + 1.3f), 1f)
+        y += pitch
+    }
+    drawRoundRect(Color.White.copy(alpha = 0.85f), topLeft = Offset(0.8f, top + 0.8f), size = Size(w - 1.6f, faceH - 1.6f), cornerRadius = r, style = Stroke(1.2f))
+}
+
+/** A function mark engraved on the strip beside its key. */
+@Composable
+fun KeyMark(symbol: KeySymbol, modifier: Modifier = Modifier, color: Color = DeckColors.Engrave) {
+    Canvas(modifier) { drawSymbol(symbol, Offset(size.width / 2f, size.height / 2f), minOf(size.width, size.height) * 0.36f, color) }
+}
+
 /** A small round push button (AMS skip, counter reset, tape shelf). */
 @Composable
 fun MiniButton(

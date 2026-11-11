@@ -129,10 +129,14 @@ fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp,
     }
 }
 
-/** The maker's name: a wide-set slab serif in raised chrome. */
-val BrandSlab = FontFamily(Font(R.font.bevan))
-/** The model name: a broad, squared sans. */
-val ModelSans = FontFamily(Font(R.font.russo_one))
+/** The maker's name: the wide, squared lettering of 1980s hi-fi. */
+val BrandFont = FontFamily(Font(R.font.michroma))
+/** The model name: a heavy extended sans. */
+val ModelFont = FontFamily(Font(R.font.krona_one))
+/** Tape labels and J-cards: a squared technical face in place of handwriting. */
+val LabelFont = FontFamily(Font(R.font.chakra_petch_semibold))
+/** Small print on labels. */
+val TypeFont = FontFamily(Font(R.font.share_tech_mono))
 
 private val Chrome = Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFE3E6EA), Color(0xFFAAB0B8), Color(0xFFECEEF1)))
 
@@ -142,11 +146,12 @@ fun BrandMark(size: TextUnit, modifier: Modifier = Modifier) {
         "WUSO",
         modifier,
         style = TextStyle(
-            fontFamily = BrandSlab,
+            fontFamily = BrandFont,
+            fontWeight = FontWeight.Bold,
             fontSize = size,
-            letterSpacing = size * 0.16f,
+            letterSpacing = size * 0.18f,
             brush = Chrome,
-            shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 2.5f), 3f),
+            shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 2f), 3f),
         ),
         maxLines = 1,
     )
@@ -158,9 +163,9 @@ fun ModelMark(size: TextUnit, modifier: Modifier = Modifier) {
         "WALKBRO",
         modifier,
         style = TextStyle(
-            fontFamily = ModelSans,
+            fontFamily = ModelFont,
             fontSize = size,
-            letterSpacing = size * 0.05f,
+            letterSpacing = size * 0.04f,
             brush = Chrome,
             shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 3f), 4f),
         ),

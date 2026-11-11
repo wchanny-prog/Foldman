@@ -1,5 +1,7 @@
 package dev.foldman.ui
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -42,11 +44,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +64,7 @@ import dev.foldman.deck.DeckEvent
 import dev.foldman.deck.DeckUi
 import dev.foldman.deck.DeckViewModel
 import dev.foldman.deck.Source
+import dev.foldman.deck.Transport
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -166,11 +171,20 @@ fun FoldmanScreen(
             val sheetHeight = maxHeight * 0.8f
             // Held sideways the inner screen is short, so the library gets a bigger share.
             val landscape = maxWidth > maxHeight
+            val coverScreen = fold == null && minOf(maxWidth, maxHeight) < 600.dp
             val posture = when {
                 fold != null && fold.state == FoldingFeature.State.HALF_OPENED && fold.orientation == FoldingFeature.Orientation.HORIZONTAL -> Posture.Tabletop
                 fold != null && fold.orientation == FoldingFeature.Orientation.VERTICAL -> Posture.Unfolded
+                // The cover screen is the upright player however the phone is tilted.
+                coverScreen -> Posture.Cover
                 maxWidth >= 600.dp && maxWidth > maxHeight * 0.7f -> Posture.Unfolded
                 else -> Posture.Cover
+            }
+            // Held to portrait on the cover screen, so tilting it doesn't turn the player on its side.
+            val activity = LocalContext.current as? Activity
+            LaunchedEffect(coverScreen, activity) {
+                activity?.requestedOrientation =
+                    if (coverScreen) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
             LaunchedEffect(posture) { view.showSystemBars(posture != Posture.Cover) }
             when (posture) {
@@ -273,79 +287,97 @@ private val OnEnamel = EngravedCaps.copy(color = Color(0xFFD9DCE0))
 @Composable
 private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, onTapes: () -> Unit, modifier: Modifier) {
     BoxWithConstraints(modifier) {
-        val capH = maxHeight * 0.12f
+        val capH = maxHeight * 0.085f
         Row(Modifier.fillMaxSize().paintedBody(Enamel, capHeight = capH, corner = 0.dp, framed = false)) {
             Column(
                 Modifier
-                    .weight(0.73f)
+                    .weight(0.7f)
                     .fillMaxHeight()
                     .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.Start))
-                    .padding(start = 20.dp, end = 14.dp),
+                    .padding(start = 14.dp, end = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Box(Modifier.fillMaxWidth().height(capH)) {
-                    // Inset from the corner so the display's rounded corner doesn't clip it.
-                    HotlineButton(onTapes, Modifier.align(Alignment.TopStart).padding(top = 22.dp, start = 8.dp).size(44.dp, 22.dp))
-                    Text("TAPES", style = OnEnamel.copy(fontSize = 7.sp), modifier = Modifier.align(Alignment.TopStart).padding(top = 48.dp, start = 14.dp))
+                // Inset from the corner so the display's rounded corner doesn't clip it.
+                Row(Modifier.fillMaxWidth().height(capH).padding(start = 8.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    HotlineButton(onTapes, Modifier.size(44.dp, 22.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
                 }
-                Spacer(Modifier.height(18.dp))
-                BrandMark(30.sp)
-                Spacer(Modifier.height(16.dp))
-                Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                        TapeWindow(ui, anim, vertical = true)
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    EjectArrow(onTapes, Modifier.size(30.dp, 58.dp))
-                }
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    listOf(ui.title, ui.artist).filter { it.isNotBlank() }.joinToString("  —  ").ifBlank { "NO TAPE" }.uppercase(),
-                    style = OnEnamel.copy(fontSize = 9.sp, letterSpacing = 1.5.sp),
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
+                Spacer(Modifier.height(12.dp))
+                BrandMark(22.sp)
                 Spacer(Modifier.height(10.dp))
-                ModelMark(38.sp)
+                // The window takes everything the lettering leaves: this is a cassette player first.
+                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TapeWindow(ui, anim, vertical = true)
+                }
+                Spacer(Modifier.height(10.dp))
+                ModelMark(26.sp)
+                Spacer(Modifier.height(2.dp))
                 Text("STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp))
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(18.dp))
             }
-            SideStrip(ui, deck, Modifier.weight(0.27f).fillMaxHeight())
+            SideStrip(ui, deck, Modifier.weight(0.3f).fillMaxHeight())
         }
     }
 }
 
-/** The silver strip down the side of the case: mic, LED, skip, keys, volume, phones. */
+/**
+ * The silver strip down the side of the case, laid out the way such players arranged them: the
+ * mic at the top, a long stop bar beside a column of ribbed keys with their marks engraved
+ * between, then the twin volume sliders and the jack at the foot.
+ */
 @Composable
 private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
-    BoxWithConstraints(modifier) {
-        val keyH = ((maxHeight - 400.dp) / 5 - 18.dp).coerceIn(34.dp, 64.dp)
-        // Runs the full height of the screen; the padding keeps controls clear of the rounded corners.
-        Column(
-            Modifier
-                .fillMaxSize()
-                .chassis(corner = 0.dp, screws = false)
-                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.End))
-                .padding(start = 10.dp, end = 12.dp, top = 28.dp, bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            MicGrille(Modifier.fillMaxWidth().height(26.dp))
-            Text("MIC", style = EngravedCaps.copy(fontSize = 7.sp))
-            Spacer(Modifier.height(8.dp))
-            StatusLed(ui.transport)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 26.dp)
-                MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 26.dp, enabled = ui.hasNext)
+    val t = ui.transport
+    // Runs the full height of the screen; the padding keeps controls clear of the rounded corners.
+    Column(
+        modifier
+            .chassis(corner = 0.dp, screws = false)
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.End))
+            .padding(start = 9.dp, end = 11.dp, top = 26.dp, bottom = 22.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                MicGrille(Modifier.size(36.dp, 30.dp))
+                Text("MIC", style = EngravedCaps.copy(fontSize = 6.sp))
             }
-            Spacer(Modifier.height(10.dp))
-            TransportKeys(ui, deck.stop, deck.rewind, deck.play, deck.fastForward, deck.pause, Modifier.fillMaxWidth(), keyHeight = keyH, vertical = true)
-            Spacer(Modifier.height(12.dp))
-            Text("VOLUME", style = EngravedCaps.copy(fontSize = 7.sp))
-            VolumeSlider(ui.volume, deck.volume, Modifier.fillMaxWidth().weight(1f))
-            Spacer(Modifier.height(8.dp))
-            PhonesJack(Modifier.size(18.dp))
-            Text("PHONES", style = EngravedCaps.copy(fontSize = 6.sp))
+            Spacer(Modifier.weight(1f))
+            StatusLed(ui.transport)
         }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth().weight(0.9f)) {
+            // The long bar: stop, and eject when the tape is already stopped.
+            Column(Modifier.weight(0.3f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+                StripKey("Stop, eject", latched = false, onPress = deck.stop, modifier = Modifier.fillMaxWidth().weight(1f))
+                Spacer(Modifier.height(5.dp))
+                Text("STOP\nEJECT", style = EngravedCaps.copy(fontSize = 6.sp, letterSpacing = 0.5.sp, lineHeight = 8.sp), textAlign = TextAlign.Center)
+            }
+            // Marks for the keys beside them.
+            Column(Modifier.weight(0.2f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                KeyMark(KeySymbol.FF, Modifier.fillMaxWidth().weight(1f))
+                KeyMark(KeySymbol.REW, Modifier.fillMaxWidth().weight(1f))
+                KeyMark(KeySymbol.PAUSE, Modifier.fillMaxWidth().weight(1f), color = Color(0xFF2F7D49))
+                KeyMark(KeySymbol.PLAY, Modifier.fillMaxWidth().weight(2.2f), color = DeckColors.AccentDeep)
+            }
+            Column(Modifier.weight(0.5f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                StripKey("Fast forward", latched = t == Transport.FAST_FORWARDING, onPress = deck.fastForward, modifier = Modifier.fillMaxWidth().weight(1f))
+                StripKey("Rewind", latched = t == Transport.REWINDING, onPress = deck.rewind, modifier = Modifier.fillMaxWidth().weight(1f))
+                StripKey("Pause", latched = t == Transport.PAUSED, onPress = deck.pause, modifier = Modifier.fillMaxWidth().weight(1f))
+                StripKey("Play", latched = t == Transport.PLAYING || t == Transport.PAUSED, onPress = deck.play, modifier = Modifier.fillMaxWidth().weight(2.2f))
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
+            MiniButton("AMS", deck.previous, symbol = KeySymbol.PREV, diameter = 26.dp)
+            MiniButton("AMS", deck.next, symbol = KeySymbol.NEXT, diameter = 26.dp, enabled = ui.hasNext)
+        }
+        Spacer(Modifier.height(10.dp))
+        VolumeSlider(ui.volume, deck.volume, Modifier.fillMaxWidth().weight(1f))
+        Text("VOLUME", style = EngravedCaps.copy(fontSize = 7.sp))
+        Spacer(Modifier.height(10.dp))
+        PhonesJack(Modifier.size(18.dp))
+        Text("PHONES", style = EngravedCaps.copy(fontSize = 6.sp))
     }
 }
 
@@ -380,8 +412,6 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
                 Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                     TapeWindow(ui, anim)
                 }
-                Spacer(Modifier.width(12.dp))
-                EjectArrow({ deck.stop() }, Modifier.size(26.dp, 50.dp))
             }
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.Bottom) {

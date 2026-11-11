@@ -33,7 +33,7 @@ launch
 shot cover 6
 adb shell -n dumpsys activity activities | grep -i -m3 "ResumedActivity\|mFocusedApp" || true
 # The TAPES button, top left, opens the shelf.
-adb shell -n input tap 130 112
+adb shell -n input tap 115 95
 shot cover-shelf 4
 adb shell -n input keyevent KEYCODE_BACK
 

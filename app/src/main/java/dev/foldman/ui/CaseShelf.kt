@@ -57,8 +57,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.foldman.deck.TapeCase
 
-private val CaseHand = TextStyle(fontFamily = FontFamily.Cursive, color = DeckColors.Ink, fontSize = 14.sp)
-private val CaseTyped = TextStyle(fontFamily = FontFamily.Monospace, color = DeckColors.Ink, fontSize = 8.sp)
+private val CaseHand = TextStyle(fontFamily = LabelFont, color = DeckColors.Ink, fontSize = 10.sp)
+private val CaseTyped = TextStyle(fontFamily = TypeFont, color = DeckColors.Ink, fontSize = 8.sp)
 private val ShelfCaps = EngravedCaps.copy(color = Color(0xFFB59B80), fontSize = 9.sp, letterSpacing = 2.sp)
 
 /** A Compact Cassette case is 70 mm wide and 109 mm tall when it stands on the shelf. */
@@ -269,7 +269,7 @@ private fun CaseFront(
             Column(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)) {
                 Text(
                     case.album,
-                    style = CaseHand.copy(fontWeight = FontWeight.Bold, lineHeight = 14.sp),
+                    style = CaseHand.copy(lineHeight = 11.sp),
                     maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
                 if (case.artist.isNotBlank()) {
@@ -308,7 +308,7 @@ private fun CaseSpine(case: TapeCase, inDeck: Boolean) {
         Spacer(Modifier.width(8.dp))
         Text(
             case.album,
-            style = CaseHand.copy(fontSize = 17.sp, fontWeight = FontWeight.Bold),
+            style = CaseHand.copy(fontSize = 13.sp),
             maxLines = 1, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )

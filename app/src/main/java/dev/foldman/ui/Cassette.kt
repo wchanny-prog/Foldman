@@ -267,16 +267,13 @@ private fun DrawScope.drawLabel(ui: DeckUi, palette: LabelPalette, measurer: Tex
         )
         withTransform({ translate(x, y); scale(1f / u, 1f / u, Offset.Zero) }) { drawText(layout) }
     }
-    val hand = TextStyle(fontFamily = FontFamily.Cursive, color = ink, fontWeight = FontWeight.Bold)
+    val hand = TextStyle(fontFamily = LabelFont, color = ink)
     val print = TextStyle(fontFamily = FontFamily.SansSerif, color = ink, fontWeight = FontWeight.Bold, letterSpacing = (0.3f * u).toSp())
     text("A", 12.75f, 14.4f, 3.6f, 5f, print)
     val title = ui.title.ifBlank { placeholderTitle(ui) }
     val line = listOf(title, ui.artist).filter { it.isNotBlank() }.joinToString("  —  ")
-    text(line, 17.5f, 13.0f, 4.6f, 71f, hand)
+    text(line.uppercase(), 17.5f, 13.6f, 3.4f, 71f, hand)
 
-    val tag = TextStyle(fontFamily = FontFamily.SansSerif, color = if (art != null) Color.White else ink, fontWeight = FontWeight.Black)
-    text(when (ui.source) { Source.LOCAL -> "FM 60"; Source.YT_MUSIC -> "YT ∞"; Source.APPLE_MUSIC -> "AM ∞" }, 79f, 44.2f, 2.6f, 14f, tag)
-    text("TYPE I  NORMAL", 12f, 44.6f, 2.2f, 30f, tag.copy(fontWeight = FontWeight.Bold))
 }
 
 private fun placeholderTitle(ui: DeckUi) = when (ui.source) {
