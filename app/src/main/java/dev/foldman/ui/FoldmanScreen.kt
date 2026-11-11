@@ -1,5 +1,6 @@
 package dev.foldman.ui
 
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.layout.offset
@@ -573,6 +574,9 @@ private fun FlyingTape(flight: TapeFlight, t: () -> Float, to: Rect?, ui: DeckUi
         Modifier
             .size(with(density) { long.toDp() }, with(density) { short.toDp() })
             .graphicsLayer {
+                // Rendered to its own image, so the trip moves and turns that image and the
+                // cassette's many small parts aren't rasterised again at every angle.
+                compositingStrategy = CompositingStrategy.Offscreen
                 val p = t()
                 val ease = p * p * (3f - 2f * p)
                 val cx = from.center.x + (to.center.x - from.center.x) * ease
