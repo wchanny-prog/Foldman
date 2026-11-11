@@ -7,8 +7,6 @@ set -x
 apk=$(ls app/build/outputs/apk/debug/*.apk | head -n 1)
 adb install -r "$apk"
 adb shell -n pm grant dev.foldman android.permission.POST_NOTIFICATIONS || true
-# No "viewing full screen" tip over the app.
-adb shell -n settings put secure immersive_mode_confirmations confirmed || true
 
 shot() {
   sleep "${2:-3}"
