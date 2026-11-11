@@ -1,5 +1,6 @@
 package dev.foldman.ui
 
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.graphics.TransformOrigin
@@ -68,7 +69,14 @@ const val TAPE_WINDOW_ASPECT = 84f / 36f
  * the left) for the folded phone, like the original portable players.
  */
 @Composable
-fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, vertical: Boolean = false) {
+fun TapeWindow(
+    ui: DeckUi,
+    anim: DeckAnimations,
+    modifier: Modifier = Modifier,
+    vertical: Boolean = false,
+    /** False where the window is set in a larger door that does the swinging. */
+    swingLid: Boolean = true,
+) {
     val measurer = rememberTextMeasurer()
     val shell by androidx.compose.animation.animateColorAsState(DeckColors.shell(ui.source), tween(600), label = "shell")
     val look = LocalSkin.current.look
@@ -107,7 +115,7 @@ fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, 
         // swings out toward you to take a tape.
         Canvas(
             Modifier.fillMaxSize().graphicsLayer {
-                val open = anim.door.value
+                val open = if (swingLid) anim.door.value else 0f
                 if (vertical) {
                     transformOrigin = TransformOrigin(1f, 0.5f)
                     rotationY = open * 40f
@@ -358,3 +366,44 @@ private fun DrawScope.drawBottomBridge(shell: Color, light: Boolean) {
 }
 
 private fun Color.luminance(): Float = 0.2126f * red + 0.7152f * green + 0.0722f * blue
+
+/**
+ * What the open door uncovers: the dark well of the player, with the two drive spindles and the
+ * head block that a tape sits against.
+ */
+@Composable
+fun DoorBay(modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val r = CornerRadius(9.dp.toPx())
+        drawRoundRect(Color(0xFF070708), cornerRadius = r)
+        drawRoundRect(
+            Brush.verticalGradient(listOf(Color(0xFF1B1C1F), Color(0xFF0C0C0E), Color(0xFF141517))),
+            topLeft = Offset(3.dp.toPx(), 3.dp.toPx()), size = Size(size.width - 6.dp.toPx(), size.height - 6.dp.toPx()),
+            cornerRadius = CornerRadius(7.dp.toPx()),
+        )
+        // Moulded ribs across the back wall.
+        var y = size.height * 0.08f
+        while (y < size.height * 0.92f) {
+            drawLine(Color.White.copy(alpha = 0.035f), Offset(size.width * 0.1f, y), Offset(size.width * 0.9f, y), 1.dp.toPx())
+            y += 9.dp.toPx()
+        }
+        // Drive spindles, where the reels sit.
+        val spindle = size.width * 0.07f
+        for (f in listOf(0.3f, 0.7f)) {
+            val c = Offset(size.width / 2f, size.height * f)
+            drawCircle(Color.Black, spindle * 1.9f, c)
+            drawCircle(Brush.radialGradient(listOf(Color(0xFFD2D4D8), Color(0xFF6B6E73)), c, spindle), spindle, c)
+            for (k in 0 until 3) {
+                rotate(k * 120f + 30f, c) { drawRect(Color(0xFF3A3C40), Offset(c.x - spindle * 0.12f, c.y - spindle), Size(spindle * 0.24f, spindle * 0.6f)) }
+            }
+            drawCircle(Color(0xFF2B2C2F), spindle * 0.28f, c)
+        }
+        // The head block and pinch roller along one side.
+        val bw = size.width * 0.12f
+        drawRoundRect(Color(0xFF2A2C30), Offset(size.width * 0.1f, size.height * 0.44f), Size(bw, size.height * 0.12f), CornerRadius(3.dp.toPx()))
+        drawRoundRect(Color(0xFF9A9DA2), Offset(size.width * 0.1f + bw * 0.25f, size.height * 0.47f), Size(bw * 0.5f, size.height * 0.06f), CornerRadius(2.dp.toPx()))
+        drawCircle(Color(0xFF111213), bw * 0.42f, Offset(size.width * 0.1f + bw / 2f, size.height * 0.6f))
+        // Shadow under the lip of the opening.
+        drawRoundRect(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent), 0f, size.height * 0.12f), cornerRadius = r)
+    }
+}

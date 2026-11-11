@@ -1,5 +1,6 @@
 package dev.foldman.ui
 
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
@@ -382,21 +383,40 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
                         Text("TAPES", style = OnEnamel.copy(fontSize = 8.sp))
                     }
                 }
-                Spacer(Modifier.height(12.dp))
-                BrandMark(30.sp)
-                Spacer(Modifier.height(10.dp))
-                // The window takes everything the lettering leaves: this is a cassette player first.
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TapeWindow(ui, anim, vertical = true)
+                Spacer(Modifier.height(6.dp))
+                // The whole front of the case is the door: lettering, window and all. It is hinged
+                // along its foot and tips out toward you, with the tape riding in it.
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    DoorBay(Modifier.matchParentSize().padding(2.dp))
+                    Column(
+                        Modifier
+                            .matchParentSize()
+                            .graphicsLayer {
+                                transformOrigin = TransformOrigin(0.5f, 1f)
+                                rotationX = -anim.door.value * 24f
+                                cameraDistance = 30f * density
+                            }
+                            .paintedBody(Enamel, corner = 10.dp, brushed = look.brushed),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Spacer(Modifier.height(10.dp))
+                        BrandMark(30.sp)
+                        Spacer(Modifier.height(10.dp))
+                        // The window takes everything the lettering leaves: this is a cassette player first.
+                        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            TapeWindow(ui, anim, vertical = true, swingLid = false)
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        ModelMark(38.sp)
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            look.tag?.let { "$it · STEREO CASSETTE PLAYER" } ?: "STEREO CASSETTE PLAYER",
+                            style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp, color = if (look.tag != null) look.tagColor else OnEnamel.color),
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
                 Spacer(Modifier.height(10.dp))
-                ModelMark(38.sp)
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    look.tag?.let { "$it · STEREO CASSETTE PLAYER" } ?: "STEREO CASSETTE PLAYER",
-                    style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp, color = if (look.tag != null) look.tagColor else OnEnamel.color),
-                )
-                Spacer(Modifier.height(18.dp))
             }
             SideStrip(ui, deck, Modifier.weight(0.3f).fillMaxHeight())
         }
