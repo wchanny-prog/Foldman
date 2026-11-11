@@ -110,12 +110,12 @@ fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, 
                 val open = anim.door.value
                 if (vertical) {
                     transformOrigin = TransformOrigin(1f, 0.5f)
-                    rotationY = open * 58f
+                    rotationY = open * 40f
                 } else {
                     transformOrigin = TransformOrigin(0.5f, 1f)
-                    rotationX = -open * 58f
+                    rotationX = -open * 40f
                 }
-                cameraDistance = 14f * density
+                cameraDistance = 30f * density
             },
         ) {
             val u = size.width / CROP.width
