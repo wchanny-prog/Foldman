@@ -78,7 +78,7 @@ fun Modifier.quarterTurn(enabled: Boolean = true): Modifier = if (!enabled) this
  * Anodised aluminium in a colour, like the painted portables of 1980: a deep gradient, fine brushing
  * along the case, and a soft band of light across it.
  */
-fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp, framed: Boolean = true): Modifier = drawWithCache {
+fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp, framed: Boolean = true, brushed: Boolean = true): Modifier = drawWithCache {
     val r = CornerRadius(corner.toPx())
     val rnd = Random(5)
     val bright = Path()
@@ -93,9 +93,14 @@ fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp,
         y += 0.9f + rnd.nextFloat() * 1.8f
     }
     val outline = Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(0f, 0f, size.width, size.height, r)) }
-    val body = Brush.verticalGradient(
-        0f to lerp(color, Color.White, 0.22f), 0.2f to lerp(color, Color.White, 0.06f), 0.6f to lerp(color, Color.Black, 0.14f), 1f to lerp(color, Color.Black, 0.42f),
-    )
+    // Moulded plastic keeps its colour top to bottom; metal falls away into shadow.
+    val body = if (brushed) {
+        Brush.verticalGradient(
+            0f to lerp(color, Color.White, 0.22f), 0.2f to lerp(color, Color.White, 0.06f), 0.6f to lerp(color, Color.Black, 0.14f), 1f to lerp(color, Color.Black, 0.42f),
+        )
+    } else {
+        Brush.verticalGradient(0f to lerp(color, Color.White, 0.16f), 0.3f to color, 1f to lerp(color, Color.Black, 0.12f))
+    }
     val sheen = Brush.linearGradient(
         0f to Color.Transparent, 0.22f to Color.White.copy(alpha = 0.13f), 0.36f to Color.Transparent,
         0.66f to Color.Transparent, 0.8f to Color.White.copy(alpha = 0.06f), 1f to Color.Transparent,
@@ -107,8 +112,10 @@ fun Modifier.paintedBody(color: Color, capHeight: Dp = 0.dp, corner: Dp = 34.dp,
         if (framed) drawRoundRect(Color.Black.copy(alpha = 0.5f), topLeft = Offset(0f, 8f), cornerRadius = r)
         clipPath(outline) {
             drawRect(body)
-            drawPath(bright, Color.White.copy(alpha = 0.075f), style = Stroke(0.9f))
-            drawPath(dim, Color.Black.copy(alpha = 0.12f), style = Stroke(0.9f))
+            if (brushed) {
+                drawPath(bright, Color.White.copy(alpha = 0.075f), style = Stroke(0.9f))
+                drawPath(dim, Color.Black.copy(alpha = 0.12f), style = Stroke(0.9f))
+            }
             if (cap > 0f) {
                 // The top cap is a separate piece: a shade lighter, with a machined seam below it.
                 drawRect(Color.White.copy(alpha = 0.07f), size = Size(size.width, cap))
@@ -138,10 +145,9 @@ val LabelFont = FontFamily(Font(R.font.chakra_petch_semibold))
 /** Small print on labels. */
 val TypeFont = FontFamily(Font(R.font.share_tech_mono))
 
-private val Chrome = Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFE3E6EA), Color(0xFFAAB0B8), Color(0xFFECEEF1)))
-
 @Composable
 fun BrandMark(size: TextUnit, modifier: Modifier = Modifier) {
+    val look = LocalSkin.current.look
     Text(
         "WUSO",
         modifier,
@@ -150,8 +156,8 @@ fun BrandMark(size: TextUnit, modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             fontSize = size,
             letterSpacing = size * 0.18f,
-            brush = Chrome,
-            shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 2f), 3f),
+            brush = look.markBrush,
+            shadow = look.markShadow,
         ),
         maxLines = 1,
     )
@@ -159,6 +165,7 @@ fun BrandMark(size: TextUnit, modifier: Modifier = Modifier) {
 
 @Composable
 fun ModelMark(size: TextUnit, modifier: Modifier = Modifier) {
+    val look = LocalSkin.current.look
     Text(
         "WALKBRO",
         modifier,
@@ -166,8 +173,8 @@ fun ModelMark(size: TextUnit, modifier: Modifier = Modifier) {
             fontFamily = ModelFont,
             fontSize = size,
             letterSpacing = size * 0.04f,
-            brush = Chrome,
-            shadow = Shadow(Color.Black.copy(alpha = 0.5f), Offset(0f, 3f), 4f),
+            brush = look.markBrush,
+            shadow = look.markShadow,
         ),
         maxLines = 1,
     )

@@ -113,6 +113,7 @@ fun DeckKey(
     val haptics = LocalHaptics.current
     // The gesture loop outlives recompositions; it calls whatever the latest action is.
     val action by rememberUpdatedState(onPress)
+    val rubber = LocalSkin.current.look.rubberKeys
     val depth by animateFloatAsState(
         when {
             pressed -> 1f
@@ -148,11 +149,11 @@ fun DeckKey(
                         sounds?.keyUp()
                     })
                 },
-        ) { drawKey(symbol, depth, accent, latched, mark) }
+        ) { drawKey(symbol, depth, accent, latched, mark, rubber) }
     }
 }
 
-private fun DrawScope.drawKey(symbol: KeySymbol, depth: Float, accent: Boolean, latched: Boolean, mark: Color?) {
+private fun DrawScope.drawKey(symbol: KeySymbol, depth: Float, accent: Boolean, latched: Boolean, mark: Color?, rubber: Boolean) {
     val w = size.width
     val h = size.height
     val travel = h * 0.14f
@@ -163,7 +164,8 @@ private fun DrawScope.drawKey(symbol: KeySymbol, depth: Float, accent: Boolean, 
     // Machined, nearly square corners: these are milled metal keys, not soft plastic ones.
     val r = CornerRadius(minOf(w, h) * 0.07f)
     val shade = 0.14f * depth
-    fun metal(c: Long) = lerp(Color(c), Color.Black, shade)
+    fun metal(c: Long) = lerp(if (rubber) lerp(Color(0xFF16171A), Color(0xFF3F4145), (Color(c).red - 0.55f).coerceIn(0f, 1f)) else Color(c), Color.Black, shade)
+    val lit = if (rubber) 0.16f else 1f
     // Slot shadow under the key.
     drawRoundRect(Color.Black.copy(alpha = 0.8f), topLeft = Offset(-1.5f, top + 2f), size = Size(w + 3f, faceH + front + 3f), cornerRadius = r)
     // Front edge, seen as the key stands proud of the slot.
@@ -179,7 +181,7 @@ private fun DrawScope.drawKey(symbol: KeySymbol, depth: Float, accent: Boolean, 
     val lines = (faceH / 3.2f).toInt().coerceAtLeast(2)
     for (i in 1 until lines) {
         val y = top + faceH * i / lines
-        drawLine(if (i % 2 == 0) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.05f), Offset(w * 0.03f, y), Offset(w * 0.97f, y), 0.8f)
+        drawLine(if (i % 2 == 0) Color.White.copy(alpha = 0.16f * lit) else Color.Black.copy(alpha = 0.05f), Offset(w * 0.03f, y), Offset(w * 0.97f, y), 0.8f)
     }
     // The finger dish: a shallow hollow milled into the cap, dark at its upper lip and bright at its lower one.
     val inset = minOf(w, faceH) * 0.13f
@@ -190,18 +192,18 @@ private fun DrawScope.drawKey(symbol: KeySymbol, depth: Float, accent: Boolean, 
         Brush.verticalGradient(listOf(metal(0xFFA4A7AC), metal(0xFFCBCDD1), metal(0xFFECEDEF)), dishTop, dishTop + dish.height),
         topLeft = Offset(inset, dishTop), size = dish, cornerRadius = dr,
     )
-    drawRoundRect(Color.White.copy(alpha = 0.75f), topLeft = Offset(inset, dishTop + 1.4f), size = dish, cornerRadius = dr, style = Stroke(1.1f))
+    drawRoundRect(Color.White.copy(alpha = 0.75f * lit), topLeft = Offset(inset, dishTop + 1.4f), size = dish, cornerRadius = dr, style = Stroke(1.1f))
     drawRoundRect(Color.Black.copy(alpha = 0.3f), topLeft = Offset(inset, dishTop), size = dish, cornerRadius = dr, style = Stroke(1.1f))
-    drawRoundRect(Color.White.copy(alpha = 0.85f), topLeft = Offset(0.8f, top + 0.8f), size = Size(w - 1.6f, faceH - 1.6f), cornerRadius = r, style = Stroke(1.2f))
+    drawRoundRect(Color.White.copy(alpha = 0.85f * lit), topLeft = Offset(0.8f, top + 0.8f), size = Size(w - 1.6f, faceH - 1.6f), cornerRadius = r, style = Stroke(1.2f))
     // The symbol is engraved and filled with paint: a bright lower lip, then the paint.
     val c = Offset(w / 2f, dishTop + dish.height * 0.5f)
     val s = minOf(w, dish.height) * 0.2f
     val ink = when {
         mark != null -> mark
         accent -> if (latched) DeckColors.Accent else DeckColors.AccentDeep
-        else -> DeckColors.Engrave
+        else -> if (rubber) Color(0xFFD5D7DA) else DeckColors.Engrave
     }
-    drawSymbol(symbol, c + Offset(0f, 1.4f), s, Color.White.copy(alpha = 0.85f))
+    drawSymbol(symbol, c + Offset(0f, 1.4f), s, Color.White.copy(alpha = 0.85f * lit))
     drawSymbol(symbol, c, s, ink)
 }
 
@@ -247,6 +249,7 @@ fun StripKey(description: String, latched: Boolean, onPress: () -> Unit, modifie
     val sounds = LocalMechSounds.current
     val haptics = LocalHaptics.current
     val action by rememberUpdatedState(onPress)
+    val rubber = LocalSkin.current.look.rubberKeys
     val depth by animateFloatAsState(
         when {
             pressed -> 1f
@@ -274,10 +277,10 @@ fun StripKey(description: String, latched: Boolean, onPress: () -> Unit, modifie
                     sounds?.keyUp()
                 })
             },
-    ) { drawRibbedKey(depth) }
+    ) { drawRibbedKey(depth, rubber) }
 }
 
-private fun DrawScope.drawRibbedKey(depth: Float) {
+private fun DrawScope.drawRibbedKey(depth: Float, rubber: Boolean) {
     val w = size.width
     val h = size.height
     val travel = minOf(h * 0.12f, 5.dp.toPx())
@@ -287,7 +290,9 @@ private fun DrawScope.drawRibbedKey(depth: Float) {
     val faceH = h - travel - frontFull
     val r = CornerRadius(minOf(w, h) * 0.08f)
     val shade = 0.14f * depth
-    fun metal(c: Long) = lerp(Color(c), Color.Black, shade)
+    // Rubber is the same key in a dark, matte material.
+    fun metal(c: Long) = lerp(if (rubber) lerp(Color(0xFF16171A), Color(0xFF3F4145), (Color(c).red - 0.55f).coerceIn(0f, 1f)) else Color(c), Color.Black, shade)
+    val lit = if (rubber) 0.16f else 1f
     // The slot the key rides in.
     drawRoundRect(Color.Black.copy(alpha = 0.55f), topLeft = Offset(-2f, -1f), size = Size(w + 4f, h + 2f), cornerRadius = r)
     drawRoundRect(
@@ -304,17 +309,17 @@ private fun DrawScope.drawRibbedKey(depth: Float) {
     var y = top + my
     val pitch = 2.4.dp.toPx()
     while (y < top + faceH - my) {
-        drawLine(Color.Black.copy(alpha = 0.26f), Offset(mx, y), Offset(w - mx, y), 1.1f)
-        drawLine(Color.White.copy(alpha = 0.7f), Offset(mx, y + 1.3f), Offset(w - mx, y + 1.3f), 1f)
+        drawLine(Color.Black.copy(alpha = if (rubber) 0.5f else 0.26f), Offset(mx, y), Offset(w - mx, y), 1.1f)
+        drawLine(Color.White.copy(alpha = 0.7f * lit), Offset(mx, y + 1.3f), Offset(w - mx, y + 1.3f), 1f)
         y += pitch
     }
-    drawRoundRect(Color.White.copy(alpha = 0.85f), topLeft = Offset(0.8f, top + 0.8f), size = Size(w - 1.6f, faceH - 1.6f), cornerRadius = r, style = Stroke(1.2f))
+    drawRoundRect(Color.White.copy(alpha = 0.85f * lit), topLeft = Offset(0.8f, top + 0.8f), size = Size(w - 1.6f, faceH - 1.6f), cornerRadius = r, style = Stroke(1.2f))
 }
 
 /** A function mark engraved on the strip beside its key. */
 @Composable
 fun KeyMark(symbol: KeySymbol, modifier: Modifier = Modifier, color: Color = DeckColors.Engrave) {
-    Canvas(modifier) { drawSymbol(symbol, Offset(size.width / 2f, size.height / 2f), minOf(size.width, size.height) * 0.36f, color) }
+    Canvas(modifier) { drawSymbol(symbol, Offset(size.width / 2f, size.height / 2f), minOf(size.width * 0.24f, size.height * 0.3f), color) }
 }
 
 /** A small round push button (AMS skip, counter reset, tape shelf). */

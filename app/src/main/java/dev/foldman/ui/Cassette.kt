@@ -65,6 +65,7 @@ const val TAPE_WINDOW_ASPECT = 84f / 36f
 fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, vertical: Boolean = false) {
     val measurer = rememberTextMeasurer()
     val shell by androidx.compose.animation.animateColorAsState(DeckColors.shell(ui.source), tween(600), label = "shell")
+    val look = LocalSkin.current.look
     Canvas(
         modifier
             .quarterTurn(vertical)
@@ -72,14 +73,22 @@ fun TapeWindow(ui: DeckUi, anim: DeckAnimations, modifier: Modifier = Modifier, 
             .graphicsLayer(),
     ) {
         val u = size.width / CROP.width
-        val r = CornerRadius(3.2f * u)
-        val rim = 1.1f * u
+        val r = CornerRadius(look.windowCorner * u)
+        val rim = (if (look.windowRing != null) 2.6f else 1.1f) * u
         // Recess and chrome rim.
         drawRoundRect(Color.Black.copy(alpha = 0.45f), topLeft = Offset(0f, rim * 0.6f), cornerRadius = r)
         drawRoundRect(
-            Brush.verticalGradient(listOf(Color(0xFFF4F5F7), Color(0xFF8C9096), Color(0xFFDADCDF))),
+            Brush.verticalGradient(look.windowRim),
             cornerRadius = r,
         )
+        look.windowRing?.let { ring ->
+            // The gasket: a coloured line let into the surround.
+            val inset = rim * 0.5f
+            drawRoundRect(
+                ring, topLeft = Offset(inset, inset), size = Size(size.width - inset * 2f, size.height - inset * 2f),
+                cornerRadius = CornerRadius(r.x - inset), style = Stroke(rim * 0.26f),
+            )
+        }
         val inner = RoundRect(rim, rim, size.width - rim, size.height - rim, CornerRadius(r.x - rim))
         val innerPath = Path().apply { addRoundRect(inner) }
         drawPath(innerPath, Color(0xFF0C0C0D))

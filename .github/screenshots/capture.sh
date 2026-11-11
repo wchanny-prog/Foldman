@@ -49,4 +49,18 @@ adb shell -n am force-stop dev.foldman
 adb shell -n wm size 1968x2184
 launch
 shot unfolded-portrait 6
+
+# The second skin, set straight in the app's settings.
+adb shell -n am force-stop dev.foldman
+prefs=$(printf "%s" "<?xml version='1.0' encoding='utf-8' standalone='yes' ?><map><string name=\"skin\">SPORT</string></map>" | base64 -w0)
+adb shell -n run-as dev.foldman mkdir -p shared_prefs
+adb shell -n "run-as dev.foldman sh -c 'echo $prefs | base64 -d > shared_prefs/foldman.xml'"
+launch
+shot sport-unfolded 6
+adb shell -n am force-stop dev.foldman
+adb shell -n wm size 1080x2520
+launch
+shot sport-cover 6
+adb shell -n input tap 115 95
+shot sport-cover-shelf 4
 ls -la shots

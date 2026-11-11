@@ -72,8 +72,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 private enum class Posture { Cover, Unfolded, Tabletop }
 
-/** Body finish: brushed gunmetal, with the silver end strip beside it. */
-private val Enamel = Color(0xFF43464B)
+/** Body finish, from the skin. */
+private val Enamel: Color
+    @Composable get() = LocalSkin.current.look.body
 
 /**
  * Picks a layout from the hinge:
@@ -153,6 +154,7 @@ fun FoldmanScreen(
             installApp = onInstallApp,
             apple = appleActions,
             cases = caseActions,
+            cycleSkin = vm::cycleSkin,
         )
     }
     val deck = remember(vm) { DeckControls(vm) }
@@ -161,6 +163,7 @@ fun FoldmanScreen(
     CompositionLocalProvider(
         LocalMechSounds provides sounds.takeIf { ui.keySounds },
         LocalHaptics provides ui.haptics,
+        LocalSkin provides ui.skin,
     ) {
         BoxWithConstraints(
             Modifier
@@ -245,6 +248,7 @@ fun FoldmanScreen(
                                 remove = vm::removeCase,
                                 cover = { vm.caseCover(it) },
                             ),
+                            cycleSkin = vm::cycleSkin,
                         ),
                         Modifier.fillMaxWidth().height(sheetHeight),
                     )
@@ -281,14 +285,16 @@ private class DeckControls(vm: DeckViewModel) {
     val volume = vm::setVolume
 }
 
-private val OnEnamel = EngravedCaps.copy(color = Color(0xFFD9DCE0))
+private val OnEnamel: TextStyle
+    @Composable get() = EngravedCaps.copy(color = LocalSkin.current.look.onBody)
 
 /** The folded phone: an upright portable player. */
 @Composable
 private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, onTapes: () -> Unit, modifier: Modifier) {
     BoxWithConstraints(modifier) {
         val capH = maxHeight * 0.085f
-        Row(Modifier.fillMaxSize().paintedBody(Enamel, capHeight = capH, corner = 0.dp, framed = false)) {
+        val look = LocalSkin.current.look
+        Row(Modifier.fillMaxSize().paintedBody(Enamel, capHeight = capH, corner = 0.dp, framed = false, brushed = look.brushed)) {
             Column(
                 Modifier
                     .weight(0.7f)
@@ -313,7 +319,10 @@ private fun CoverWalkman(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, o
                 Spacer(Modifier.height(10.dp))
                 ModelMark(26.sp)
                 Spacer(Modifier.height(2.dp))
-                Text("STEREO CASSETTE PLAYER", style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp))
+                Text(
+                    look.tag?.let { "$it · STEREO CASSETTE PLAYER" } ?: "STEREO CASSETTE PLAYER",
+                    style = OnEnamel.copy(fontSize = 7.sp, letterSpacing = 3.sp, color = if (look.tag != null) look.tagColor else OnEnamel.color),
+                )
                 Spacer(Modifier.height(18.dp))
             }
             SideStrip(ui, deck, Modifier.weight(0.3f).fillMaxHeight())
@@ -332,7 +341,7 @@ private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
     // Runs the full height of the screen; the padding keeps controls clear of the rounded corners.
     Column(
         modifier
-            .chassis(corner = 0.dp, screws = false)
+            .stripFinish(LocalSkin.current.look, 0.dp)
             .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top + WindowInsetsSides.End))
             .padding(start = 9.dp, end = 11.dp, top = 26.dp, bottom = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -384,7 +393,8 @@ private fun SideStrip(ui: DeckUi, deck: DeckControls, modifier: Modifier) {
 /** The unfolded phone: the player laid down as a deck. */
 @Composable
 private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: DeckViewModel, modifier: Modifier) {
-    Row(modifier.paintedBody(Enamel, corner = 22.dp)) {
+    val look = LocalSkin.current.look
+    Row(modifier.paintedBody(Enamel, corner = 22.dp, brushed = look.brushed)) {
         Column(Modifier.weight(0.74f).fillMaxHeight().padding(horizontal = 20.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 BrandMark(22.sp)
@@ -428,7 +438,7 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
                 .weight(0.26f)
                 .fillMaxHeight()
                 .padding(6.dp)
-                .chassis(corner = 18.dp, screws = false)
+                .stripFinish(look, 18.dp)
                 .padding(horizontal = 12.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -439,6 +449,8 @@ private fun DeckBand(ui: DeckUi, anim: DeckAnimations, deck: DeckControls, vm: D
                 SlideSwitch(ui.keySounds, vm::setKeySounds, "CLICK", height = 54.dp)
                 Spacer(Modifier.height(8.dp))
                 SlideSwitch(ui.haptics, vm::setHaptics, "HAPTIC", height = 54.dp)
+                Spacer(Modifier.height(8.dp))
+                MiniButton("SKIN", vm::cycleSkin, diameter = 20.dp)
                 Spacer(Modifier.weight(1f))
                 PhonesJack(Modifier.size(18.dp))
                 Text("PHONES", style = EngravedCaps.copy(fontSize = 6.sp))

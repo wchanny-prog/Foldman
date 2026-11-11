@@ -60,6 +60,7 @@ class ShelfActions(
     val installApp: (Source) -> Unit,
     val apple: AppleActions,
     val cases: CaseActions,
+    val cycleSkin: () -> Unit,
 )
 
 /**
@@ -80,6 +81,9 @@ fun TapeShelf(ui: DeckUi, actions: ShelfActions, modifier: Modifier = Modifier) 
             ShelfTab("TAPE CASES", selected = showCases) { showCases = true }
             Spacer(Modifier.width(8.dp))
             ShelfTab("SOURCES", selected = !showCases) { showCases = false }
+            Spacer(Modifier.weight(1f))
+            // Swaps the player's case; the label names the one it's wearing.
+            ShelfTab("SKIN · ${ui.skin.label}", selected = false, onClick = actions.cycleSkin)
         }
         Spacer(Modifier.height(12.dp))
         if (showCases) {

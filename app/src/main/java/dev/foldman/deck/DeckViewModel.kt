@@ -65,6 +65,7 @@ data class DeckUi(
     val currentQueueId: Long = -1,
     val keySounds: Boolean = true,
     val haptics: Boolean = true,
+    val skin: Skin = Skin.GUNMETAL,
     val apple: AppleUi = AppleUi(),
     /** The shelf of tape cases: every album that has been through the deck. */
     val cases: List<TapeCase> = emptyList(),
@@ -387,6 +388,15 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
         tick()
     }
 
+    /** Swaps the case for the next skin. */
+    fun cycleSkin() {
+        prefs.edit { putString(KEY_SKIN, skin.next().name) }
+        tick()
+    }
+
+    private val skin: Skin
+        get() = runCatching { Skin.valueOf(prefs.getString(KEY_SKIN, null) ?: "") }.getOrDefault(Skin.GUNMETAL)
+
     fun setHaptics(on: Boolean) {
         prefs.edit { putBoolean(KEY_HAPTICS, on) }
         tick()
@@ -576,6 +586,7 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
             currentQueueId = if (source == Source.LOCAL) state.trackIndex.toLong() else state.currentQueueId,
             keySounds = prefs.getBoolean(KEY_SOUNDS, true),
             haptics = prefs.getBoolean(KEY_HAPTICS, true),
+            skin = skin,
             apple = apple.value,
             cases = caseStore.cases.value,
             inDeckCaseId = if (album.isNotBlank() && state.status == SourceStatus.Ready) caseStore.idOf(source, album) else null,
@@ -624,6 +635,7 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
         private const val KEY_FOLDER = "folder"
         private const val KEY_SOUNDS = "key_sounds"
         private const val KEY_HAPTICS = "haptics"
+        private const val KEY_SKIN = "skin"
         private const val KEY_APPLE_DEV = "apple_developer_token"
         private const val KEY_APPLE_USER = "apple_music_user_token"
         /** Winding speed relative to play: a four-minute song winds through in about 20 s. */
