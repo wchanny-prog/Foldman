@@ -1,0 +1,173 @@
+++ head -n 1
+++ ls app/build/outputs/apk/debug/Foldman-0.1.2-debug.apk
++ apk=app/build/outputs/apk/debug/Foldman-0.1.2-debug.apk
++ adb install -r app/build/outputs/apk/debug/Foldman-0.1.2-debug.apk
+Performing Streamed Install
+Success
++ adb shell -n pm grant dev.foldman android.permission.POST_NOTIFICATIONS
++ adb shell -n wm size 1080x2520
++ adb shell -n wm density 420
++ launch
++ adb shell -n am start -W -n dev.foldman/.MainActivity
+Starting: Intent { cmp=dev.foldman/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: dev.foldman/.MainActivity
+TotalTime: 4988
+WaitTime: 5026
+Complete
++ shot cover-empty 8
++ sleep 8
++ adb shell -n screencap -p /sdcard/shot.png
++ adb pull /sdcard/shot.png shots/cover-empty.png
+/sdcard/shot.png: 1 file pulled, 0 skipped. 93.6 MB/s (931500 bytes in 0.009s)
++ adb shell -n am force-stop dev.foldman
++ seed
++ local b64
+++ base64 -w0 .github/screenshots/cases.json
++ b64=W3siaWQiOiJhMSIsInNvdXJjZSI6IkFQUExFX01VU0lDIiwiYWxidW0iOiJNaWRuaWdodCBEcml2ZSIsImFydGlzdCI6IlRoZSBOZW9uIFBhcmFkZSIsInN0cmlwZSI6LTEwMjIxNjQsInN0cmlwZTIiOi04NzExMDcsImhhc0NvdmVyIjpmYWxzZSwiYWRkZWRBdCI6MSwibGFzdFBsYXllZEF0IjoxfSwKeyJpZCI6ImEyIiwic291cmNlIjoiQVBQTEVfTVVTSUMiLCJhbGJ1bSI6IkhhcmJvdXIgTGlnaHRzIiwiYXJ0aXN0IjoiTWVpIExpbiIsInN0cmlwZSI6LTEzNjY5NzA3LCJzdHJpcGUyIjotODMzNjQ0NCwiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTMiLCJzb3VyY2UiOiJMT0NBTCIsImFsYnVtIjoiU3VtbWVyIE1peHRhcGUgMTk4OSIsImFydGlzdCI6IlZhcmlvdXMiLCJzdHJpcGUiOi00NzA1NzUwLCJzdHJpcGUyIjotMTU5NiwiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTQiLCJzb3VyY2UiOiJZVF9NVVNJQyIsImFsYnVtIjoiU2xvdyBUcmFpbiBIb21lIiwiYXJ0aXN0IjoiQ2Fzc2lkeSAmIFRoZSBSZWVscyIsInN0cmlwZSI6LTEyNjI3NTMxLCJzdHJpcGUyIjotNjE5MDk3NywiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTUiLCJzb3VyY2UiOiJBUFBMRV9NVVNJQyIsImFsYnVtIjoiUGFwZXIgS2l0ZXMiLCJhcnRpc3QiOiJMb3cgVGlkZSBSYWRpbyIsInN0cmlwZSI6LTU1NTIxOTYsInN0cmlwZTIiOi0xODYxMSwiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTYiLCJzb3VyY2UiOiJBUFBMRV9NVVNJQyIsImFsYnVtIjoiTGl2ZSBhdCB0aGUgQ29saXNldW0iLCJhcnRpc3QiOiJXb25nICYgRnJpZW5kcyIsInN0cmlwZSI6LTE0MjQ0MTk4LCJzdHJpcGUyIjotMTE3NTE2MDAsImhhc0NvdmVyIjpmYWxzZSwiYWRkZWRBdCI6MSwibGFzdFBsYXllZEF0IjoxfV0K
++ adb shell -n run-as dev.foldman mkdir -p files/cases
++ adb shell -n 'run-as dev.foldman sh -c '\''echo W3siaWQiOiJhMSIsInNvdXJjZSI6IkFQUExFX01VU0lDIiwiYWxidW0iOiJNaWRuaWdodCBEcml2ZSIsImFydGlzdCI6IlRoZSBOZW9uIFBhcmFkZSIsInN0cmlwZSI6LTEwMjIxNjQsInN0cmlwZTIiOi04NzExMDcsImhhc0NvdmVyIjpmYWxzZSwiYWRkZWRBdCI6MSwibGFzdFBsYXllZEF0IjoxfSwKeyJpZCI6ImEyIiwic291cmNlIjoiQVBQTEVfTVVTSUMiLCJhbGJ1bSI6IkhhcmJvdXIgTGlnaHRzIiwiYXJ0aXN0IjoiTWVpIExpbiIsInN0cmlwZSI6LTEzNjY5NzA3LCJzdHJpcGUyIjotODMzNjQ0NCwiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTMiLCJzb3VyY2UiOiJMT0NBTCIsImFsYnVtIjoiU3VtbWVyIE1peHRhcGUgMTk4OSIsImFydGlzdCI6IlZhcmlvdXMiLCJzdHJpcGUiOi00NzA1NzUwLCJzdHJpcGUyIjotMTU5NiwiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTQiLCJzb3VyY2UiOiJZVF9NVVNJQyIsImFsYnVtIjoiU2xvdyBUcmFpbiBIb21lIiwiYXJ0aXN0IjoiQ2Fzc2lkeSAmIFRoZSBSZWVscyIsInN0cmlwZSI6LTEyNjI3NTMxLCJzdHJpcGUyIjotNjE5MDk3NywiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTUiLCJzb3VyY2UiOiJBUFBMRV9NVVNJQyIsImFsYnVtIjoiUGFwZXIgS2l0ZXMiLCJhcnRpc3QiOiJMb3cgVGlkZSBSYWRpbyIsInN0cmlwZSI6LTU1NTIxOTYsInN0cmlwZTIiOi0xODYxMSwiaGFzQ292ZXIiOmZhbHNlLCJhZGRlZEF0IjoxLCJsYXN0UGxheWVkQXQiOjF9LAp7ImlkIjoiYTYiLCJzb3VyY2UiOiJBUFBMRV9NVVNJQyIsImFsYnVtIjoiTGl2ZSBhdCB0aGUgQ29saXNldW0iLCJhcnRpc3QiOiJXb25nICYgRnJpZW5kcyIsInN0cmlwZSI6LTE0MjQ0MTk4LCJzdHJpcGUyIjotMTE3NTE2MDAsImhhc0NvdmVyIjpmYWxzZSwiYWRkZWRBdCI6MSwibGFzdFBsYXllZEF0IjoxfV0K | base64 -d > files/cases/cases.json'\'''
++ adb shell -n run-as dev.foldman ls -la files/cases
+total 24
+drwx------ 2 u0_a192 u0_a192 4096 2026-11-11 07:23 .
+drwxrwx--x 3 u0_a192 u0_a192 4096 2026-11-11 07:23 ..
+-rw-rw-rw- 1 u0_a192 u0_a192 1011 2026-11-11 07:23 cases.json
++ launch
++ adb shell -n am start -W -n dev.foldman/.MainActivity
+Starting: Intent { cmp=dev.foldman/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: dev.foldman/.MainActivity
+TotalTime: 3728
+WaitTime: 3734
+Complete
++ shot cover 6
++ sleep 6
++ adb shell -n screencap -p /sdcard/shot.png
++ adb pull /sdcard/shot.png shots/cover.png
+/sdcard/shot.png: 1 file pulled, 0 skipped. 117.8 MB/s (936920 bytes in 0.008s)
++ adb shell -n dumpsys activity activities
++ grep -i -m3 'ResumedActivity\|mFocusedApp'
+    topResumedActivity=ActivityRecord{36b6660 u0 dev.foldman/.MainActivity t9}
+  ResumedActivity: ActivityRecord{36b6660 u0 dev.foldman/.MainActivity t9}
+  mFocusedApp=ActivityRecord{36b6660 u0 dev.foldman/.MainActivity t9}
+++ tail -1
+++ adb shell -n wm size
+++ grep -o '[0-9]*x[0-9]*'
++ sz=1080x1920
++ adb shell -n input tap 115 1858
++ shot cover-shelf 4
++ sleep 4
++ adb shell -n screencap -p /sdcard/shot.png
++ adb pull /sdcard/shot.png shots/cover-shelf.png
+/sdcard/shot.png: 1 file pulled, 0 skipped. 57.0 MB/s (554158 bytes in 0.009s)
++ adb shell -n input keyevent KEYCODE_BACK
++ adb shell -n am force-stop dev.foldman
++ adb shell -n wm size 2184x1968
++ adb shell -n wm density 420
++ adb shell -n settings put global animator_duration_scale 1
++ launch
++ adb shell -n am start -W -n dev.foldman/.MainActivity
+Starting: Intent { cmp=dev.foldman/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: dev.foldman/.MainActivity
+TotalTime: 4191
+WaitTime: 4198
+Complete
++ shot unfolded 6
++ sleep 6
++ adb shell -n screencap -p /sdcard/shot.png
++ adb pull /sdcard/shot.png shots/unfolded.png
+/sdcard/shot.png: 1 file pulled, 0 skipped. 86.3 MB/s (1287754 bytes in 0.014s)
+++ tail -1
+++ adb shell -n wm size
+++ grep -o '[0-9]*x[0-9]*'
++ size=1920x1920
++ W=1920
++ H=1920
++ rec=4798
++ sleep 1.5
++ adb shell -n screenrecord --time-limit 8 --bit-rate 8000000 /sdcard/load.mp4
++ adb shell -n input tap 460 566
++ wait 4798
++ sleep 1
++ adb pull /sdcard/load.mp4 shots/load.mp4
+/sdcard/load.mp4: 1 file pulled, 0 skipped. 88.3 MB/s (235880 bytes in 0.003s)
++ '[' -s shots/load.mp4 ']'
++ ffmpeg -loglevel error -ss 1.6 -i shots/load.mp4 -vf fps=8,scale=480:-2 -frames:v 48 shots/load-%02d.png
++ rm -f shots/load.mp4
++ adb shell -n settings put global animator_duration_scale 0
++ adb shell -n am force-stop dev.foldman
++ adb shell -n wm size 1968x2184
++ launch
++ adb shell -n am start -W -n dev.foldman/.MainActivity
+Starting: Intent { cmp=dev.foldman/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: dev.foldman/.MainActivity
+TotalTime: 3770
+WaitTime: 3848
+Complete
++ shot unfolded-portrait 6
++ sleep 6
++ adb shell -n screencap -p /sdcard/shot.png
++ adb pull /sdcard/shot.png shots/unfolded-portrait.png
+/sdcard/shot.png: 1 file pulled, 0 skipped. 129.9 MB/s (1541983 bytes in 0.011s)
++ adb shell -n am force-stop dev.foldman
+++ printf %s '<?xml version='\''1.0'\'' encoding='\''utf-8'\'' standalone='\''yes'\'' ?><map><string name="skin">SPORT</string></map>'
+++ base64 -w0
++ prefs=PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0ndXRmLTgnIHN0YW5kYWxvbmU9J3llcycgPz48bWFwPjxzdHJpbmcgbmFtZT0ic2tpbiI+U1BPUlQ8L3N0cmluZz48L21hcD4=
++ adb shell -n run-as dev.foldman mkdir -p shared_prefs
++ adb shell -n 'run-as dev.foldman sh -c '\''echo PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0ndXRmLTgnIHN0YW5kYWxvbmU9J3llcycgPz48bWFwPjxzdHJpbmcgbmFtZT0ic2tpbiI+U1BPUlQ8L3N0cmluZz48L21hcD4= | base64 -d > shared_prefs/foldman.xml'\'''
++ launch
++ adb shell -n am start -W -n dev.foldman/.MainActivity
+Starting: Intent { cmp=dev.foldman/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: dev.foldman/.MainActivity
+TotalTime: 3051
+WaitTime: 3057
+Complete
++ shot sport-unfolded 6
++ sleep 6
++ adb shell -n screencap -p /sdcard/shot.png
++ adb pull /sdcard/shot.png shots/sport-unfolded.png
+adb: error: failed to get feature set: device offline
++ adb shell -n am force-stop dev.foldman
+adb: device offline
++ adb shell -n wm size 1080x2520
+adb: device offline
++ launch
++ adb shell -n am start -W -n dev.foldman/.MainActivity
+adb: device offline
++ shot sport-cover 6
++ sleep 6
++ adb shell -n screencap -p /sdcard/shot.png
+adb: device 'emulator-5554' not found
++ adb pull /sdcard/shot.png shots/sport-cover.png
+adb: error: failed to get feature set: device 'emulator-5554' not found
+++ adb shell -n wm size
+++ tail -1
+++ grep -o '[0-9]*x[0-9]*'
+adb: device 'emulator-5554' not found
++ sz=
++ adb shell -n input tap 115 -62
+adb: device 'emulator-5554' not found
++ shot sport-cover-shelf 4
++ sleep 4
++ adb shell -n screencap -p /sdcard/shot.png
+adb: device 'emulator-5554' not found
++ adb pull /sdcard/shot.png shots/sport-cover-shelf.png
+adb: error: failed to get feature set: device 'emulator-5554' not found
++ ls -la shots
+total 5160
+drwxr-xr-x  2 runner runner    4096 Nov 11 07:25 .
+drwxr-xr-x 14 runner runner    4096 Nov 11 07:23 ..
+-rw-r--r--  1 runner runner  931500 Nov 11 07:23 cover-empty.png
+-rw-r--r--  1 runner runner  554158 Nov 11 07:24 cover-shelf.png
+-rw-r--r--  1 runner runner  936920 Nov 11 07:24 cover.png
+-rw-r--r--  1 runner runner    8669 Nov 11 07:25 log.txt
+-rw-r--r--  1 runner runner 1541983 Nov 11 07:25 unfolded-portrait.png
+-rw-r--r--  1 runner runner 1287754 Nov 11 07:24 unfolded.png
